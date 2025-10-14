@@ -15,20 +15,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, MoreVertical, Eye, Edit, Trash2, FileDown, CheckCircle2 } from "lucide-react";
-
-const mockInvoices = [
-  { no: "MPISS-2025-0012", client: "Acme Corporation", date: "15 Jan 2025", amount: "58,000.00", status: "paid" },
-  { no: "MPISS-2025-0011", client: "Tech Solutions Ltd", date: "12 Jan 2025", amount: "120,500.00", status: "unpaid" },
-  { no: "MPISS-2025-0010", client: "Global Industries", date: "10 Jan 2025", amount: "14,250.00", status: "paid" },
-  { no: "MPISS-2025-0009", client: "Metro Services", date: "08 Jan 2025", amount: "45,300.00", status: "overdue" },
-  { no: "MPISS-2025-0008", client: "BuildCo Kenya", date: "05 Jan 2025", amount: "87,600.00", status: "paid" },
-  { no: "MPISS-2025-0007", client: "Prime Contractors", date: "03 Jan 2025", amount: "32,750.00", status: "unpaid" },
-  { no: "MPISS-2025-0006", client: "Swift Logistics", date: "01 Jan 2025", amount: "68,900.00", status: "paid" },
-  { no: "MPISS-2025-0005", client: "Alpha Enterprises", date: "28 Dec 2024", amount: "91,200.00", status: "overdue" },
-];
+import { useInvoices } from "@/hooks/useInvoices";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 const getStatusBadge = (status: string) => {
   const variants: Record<string, "default" | "secondary" | "destructive"> = {
@@ -45,16 +37,22 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function InvoiceHistory() {
+  const { invoices, isLoading, updateInvoiceStatus, deleteInvoice } = useInvoices();
+  const { settings } = useCompanySettings();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
-  const filteredInvoices = mockInvoices.filter((invoice) => {
+  const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch =
-      invoice.no.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.client.toLowerCase().includes(searchQuery.toLowerCase());
+      invoice.invoice_no.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.client_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filterStatus === "all" || invoice.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -125,11 +123,13 @@ export default function InvoiceHistory() {
             <TableBody>
               {filteredInvoices.length > 0 ? (
                 filteredInvoices.map((invoice) => (
-                  <TableRow key={invoice.no} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-medium">{invoice.no}</TableCell>
-                    <TableCell>{invoice.client}</TableCell>
-                    <TableCell>{invoice.date}</TableCell>
-                    <TableCell className="font-semibold">{invoice.amount}</TableCell>
+                  <TableRow key={invoice.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableCell className="font-medium">{invoice.invoice_no}</TableCell>
+                    <TableCell>{invoice.client_name}</TableCell>
+                    <TableCell>{new Date(invoice.date_issued).toLocaleDateString()}</TableCell>
+                    <TableCell className="font-semibold">
+                      {settings?.currency_label || "Ksh"} {invoice.grand_total.toLocaleString()}
+                    </TableCell>
                     <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -151,13 +151,24 @@ export default function InvoiceHistory() {
                             <FileDown className="h-4 w-4" />
                             Download PDF
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           {invoice.status !== "paid" && (
-                            <DropdownMenuItem className="gap-2">
+                            <DropdownMenuItem 
+                              className="gap-2"
+                              onClick={() => updateInvoiceStatus({ id: invoice.id, status: "paid" })}
+                            >
                               <CheckCircle2 className="h-4 w-4" />
                               Mark as Paid
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem className="gap-2 text-destructive">
+                          <DropdownMenuItem 
+                            className="gap-2 text-destructive"
+                            onClick={() => {
+                              if (confirm("Are you sure you want to delete this invoice?")) {
+                                deleteInvoice(invoice.id);
+                              }
+                            }}
+                          >
                             <Trash2 className="h-4 w-4" />
                             Delete
                           </DropdownMenuItem>

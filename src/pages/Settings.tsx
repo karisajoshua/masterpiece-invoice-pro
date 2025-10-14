@@ -1,38 +1,79 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
+import logo from "@/assets/masterpiece-logo.png";
 
 export default function Settings() {
-  const [companyName, setCompanyName] = useState("Master Piece International Supplies and Services");
-  const [invoicePrefix, setInvoicePrefix] = useState("MPISS-");
-  const [address, setAddress] = useState("Lunga Lunga Business Complex, Industrial Area, Nairobi, Kenya");
-  const [phone1, setPhone1] = useState("+254 728 268 660");
-  const [phone2, setPhone2] = useState("+254 752 268 660");
-  const [phone3, setPhone3] = useState("+254 780 566 660");
-  const [email, setEmail] = useState("info@mpissl.co.ke");
-  const [currencyLabel, setCurrencyLabel] = useState("Ksh");
-  const [defaultVat, setDefaultVat] = useState("16");
-  const [paymentTerms, setPaymentTerms] = useState("Payment due within 7 days of receipt.");
+  const { settings, isLoading, updateSettings } = useCompanySettings();
+
+  const [companyName, setCompanyName] = useState("");
+  const [companyPin, setCompanyPin] = useState("");
+  const [invoicePrefix, setInvoicePrefix] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone1, setPhone1] = useState("");
+  const [phone2, setPhone2] = useState("");
+  const [phone3, setPhone3] = useState("");
+  const [email, setEmail] = useState("");
+  const [currencyLabel, setCurrencyLabel] = useState("");
+  const [defaultVat, setDefaultVat] = useState("");
+  const [paymentTerms, setPaymentTerms] = useState("");
+
+  useEffect(() => {
+    if (settings) {
+      setCompanyName(settings.company_name);
+      setCompanyPin(settings.company_pin);
+      setInvoicePrefix(settings.invoice_prefix);
+      setAddress(settings.address);
+      setPhone1(settings.phone_1);
+      setPhone2(settings.phone_2);
+      setPhone3(settings.phone_3);
+      setEmail(settings.email);
+      setCurrencyLabel(settings.currency_label);
+      setDefaultVat(settings.default_vat_percent.toString());
+      setPaymentTerms(settings.payment_terms_text);
+    }
+  }, [settings]);
 
   const handleSave = () => {
-    toast({
-      title: "Settings Saved",
-      description: "Your company settings have been updated successfully.",
+    updateSettings({
+      company_name: companyName,
+      company_pin: companyPin,
+      invoice_prefix: invoicePrefix,
+      address,
+      phone_1: phone1,
+      phone_2: phone2,
+      phone_3: phone3,
+      email,
+      currency_label: currencyLabel,
+      default_vat_percent: parseFloat(defaultVat),
+      payment_terms_text: paymentTerms,
     });
   };
 
   const handleReset = () => {
-    toast({
-      title: "Settings Reset",
-      description: "Default settings have been restored.",
-      variant: "destructive",
-    });
+    if (settings) {
+      setCompanyName(settings.company_name);
+      setCompanyPin(settings.company_pin);
+      setInvoicePrefix(settings.invoice_prefix);
+      setAddress(settings.address);
+      setPhone1(settings.phone_1);
+      setPhone2(settings.phone_2);
+      setPhone3(settings.phone_3);
+      setEmail(settings.email);
+      setCurrencyLabel(settings.currency_label);
+      setDefaultVat(settings.default_vat_percent.toString());
+      setPaymentTerms(settings.payment_terms_text);
+    }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -68,10 +109,18 @@ export default function Settings() {
               </p>
             </div>
             <div className="space-y-2">
+              <Label>Company PIN</Label>
+              <Input
+                value={companyPin}
+                onChange={(e) => setCompanyPin(e.target.value)}
+                placeholder="Enter company PIN"
+              />
+            </div>
+            <div className="space-y-2">
               <Label>Company Logo</Label>
               <div className="flex items-center gap-4">
-                <div className="flex h-20 w-20 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted">
-                  <span className="text-2xl font-bold text-primary">MP</span>
+                <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-border overflow-hidden bg-white">
+                  <img src={logo} alt="Master Piece Logo" className="h-full w-full object-contain p-2" />
                 </div>
                 <Button variant="outline" className="gap-2">
                   <Upload className="h-4 w-4" />

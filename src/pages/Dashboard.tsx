@@ -9,45 +9,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
-const kpiData = [
-  {
-    title: "Total Invoices",
-    value: "24",
-    description: "All invoices created to date",
-    icon: FileText,
-    trend: "+3 this month",
-  },
-  {
-    title: "Paid Invoices",
-    value: "18",
-    description: "Payments received",
-    icon: CheckCircle2,
-    trend: "75% paid rate",
-  },
-  {
-    title: "Unpaid Invoices",
-    value: "5",
-    description: "Awaiting payment",
-    icon: Clock,
-    trend: "21% unpaid",
-  },
-  {
-    title: "Outstanding",
-    value: "Ksh 192,750",
-    description: "Total amount due",
-    icon: AlertCircle,
-    trend: "Due within 7 days",
-  },
-];
-
-const recentInvoices = [
-  { no: "MPISS-2025-0012", client: "Acme Corp", date: "15 Jan 2025", amount: "Ksh 58,000", status: "paid" },
-  { no: "MPISS-2025-0011", client: "Tech Solutions Ltd", date: "12 Jan 2025", amount: "Ksh 120,500", status: "unpaid" },
-  { no: "MPISS-2025-0010", client: "Global Industries", date: "10 Jan 2025", amount: "Ksh 14,250", status: "paid" },
-  { no: "MPISS-2025-0009", client: "Metro Services", date: "08 Jan 2025", amount: "Ksh 45,300", status: "overdue" },
-  { no: "MPISS-2025-0008", client: "BuildCo Kenya", date: "05 Jan 2025", amount: "Ksh 87,600", status: "paid" },
-];
+import { useInvoices } from "@/hooks/useInvoices";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -64,6 +27,53 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function Dashboard() {
+  const { invoices, isLoading } = useInvoices();
+  const { settings } = useCompanySettings();
+
+  const totalInvoices = invoices.length;
+  const paidInvoices = invoices.filter(inv => inv.status === "paid").length;
+  const unpaidInvoices = invoices.filter(inv => inv.status === "unpaid").length;
+  const overdueInvoices = invoices.filter(inv => inv.status === "overdue").length;
+  const outstanding = invoices
+    .filter(inv => inv.status !== "paid")
+    .reduce((sum, inv) => sum + inv.grand_total, 0);
+
+  const recentInvoices = invoices.slice(0, 5);
+
+  const kpiData = [
+    {
+      title: "Total Invoices",
+      value: totalInvoices,
+      description: "All time",
+      icon: FileText,
+      trend: null,
+    },
+    {
+      title: "Paid Invoices",
+      value: paidInvoices,
+      description: `${totalInvoices > 0 ? Math.round((paidInvoices / totalInvoices) * 100) : 0}% of total`,
+      icon: CheckCircle2,
+      trend: null,
+    },
+    {
+      title: "Unpaid Invoices",
+      value: unpaidInvoices,
+      description: `${overdueInvoices} overdue`,
+      icon: Clock,
+      trend: null,
+    },
+    {
+      title: "Outstanding",
+      value: `${settings?.currency_label || "Ksh"} ${outstanding.toLocaleString()}`,
+      description: "Pending payment",
+      icon: AlertCircle,
+      trend: null,
+    },
+  ];
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
   return (
     <div className="space-y-6">
       <div>
@@ -105,15 +115,25 @@ export default function Dashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentInvoices.map((invoice) => (
-                <TableRow key={invoice.no} className="cursor-pointer hover:bg-muted/50">
-                  <TableCell className="font-medium">{invoice.no}</TableCell>
-                  <TableCell>{invoice.client}</TableCell>
-                  <TableCell>{invoice.date}</TableCell>
-                  <TableCell className="font-semibold">{invoice.amount}</TableCell>
-                  <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+              {recentInvoices.length > 0 ? (
+                recentInvoices.map((invoice) => (
+                  <TableRow key={invoice.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableCell className="font-medium">{invoice.invoice_no}</TableCell>
+                    <TableCell>{invoice.client_name}</TableCell>
+                    <TableCell>{new Date(invoice.date_issued).toLocaleDateString()}</TableCell>
+                    <TableCell className="font-semibold">
+                      {settings?.currency_label || "Ksh"} {invoice.grand_total.toLocaleString()}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    No invoices yet. Create your first invoice to get started!
+                  </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -1,36 +1,59 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, FileDown } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Plus, Trash2 } from "lucide-react";
+import { useInvoices } from "@/hooks/useInvoices";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { useNavigate } from "react-router-dom";
+import logo from "@/assets/masterpiece-logo.png";
 
 interface LineItem {
   id: string;
   description: string;
-  qty: number;
-  unitPrice: number;
-  vatPercent: number;
+  qty: number | string;
+  unitPrice: number | string;
+  vatPercent: number | string;
 }
 
 export default function CreateInvoice() {
-  const [invoiceNo] = useState(`MPISS-2025-${String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')}`);
+  const navigate = useNavigate();
+  const { createInvoice } = useInvoices();
+  const { settings } = useCompanySettings();
+  
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [status, setStatus] = useState<"paid" | "unpaid" | "overdue">("unpaid");
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [billingAddress, setBillingAddress] = useState("");
-  const [status, setStatus] = useState("unpaid");
+  const [reference, setReference] = useState("");
+  const [notes, setNotes] = useState("");
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: "1", description: "", qty: 1, unitPrice: 0, vatPercent: 16 },
+    { id: "1", description: "", qty: "", unitPrice: "", vatPercent: "16" },
   ]);
+
+  useEffect(() => {
+    if (settings) {
+      setLineItems([
+        { id: "1", description: "", qty: "", unitPrice: "", vatPercent: settings.default_vat_percent.toString() },
+      ]);
+    }
+  }, [settings]);
 
   const addLineItem = () => {
     setLineItems([
       ...lineItems,
-      { id: Date.now().toString(), description: "", qty: 1, unitPrice: 0, vatPercent: 16 },
+      {
+        id: Date.now().toString(),
+        description: "",
+        qty: "",
+        unitPrice: "",
+        vatPercent: settings?.default_vat_percent.toString() || "16",
+      },
     ]);
   };
 
@@ -49,67 +72,110 @@ export default function CreateInvoice() {
   };
 
   const calculateLineTotal = (item: LineItem) => {
-    const subtotal = item.qty * item.unitPrice;
-    const vat = subtotal * (item.vatPercent / 100);
-    return subtotal + vat;
+    const qty = parseFloat(item.qty.toString()) || 0;
+    const price = parseFloat(item.unitPrice.toString()) || 0;
+    const vat = parseFloat(item.vatPercent.toString()) || 0;
+    return qty * price * (1 + vat / 100);
   };
 
-  const subtotal = lineItems.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
-  const vatTotal = lineItems.reduce(
-    (sum, item) => sum + item.qty * item.unitPrice * (item.vatPercent / 100),
-    0
-  );
+  const subtotal = lineItems.reduce((sum, item) => {
+    const qty = parseFloat(item.qty.toString()) || 0;
+    const price = parseFloat(item.unitPrice.toString()) || 0;
+    return sum + qty * price;
+  }, 0);
+
+  const vatTotal = lineItems.reduce((sum, item) => {
+    const qty = parseFloat(item.qty.toString()) || 0;
+    const price = parseFloat(item.unitPrice.toString()) || 0;
+    const vat = parseFloat(item.vatPercent.toString()) || 0;
+    return sum + qty * price * (vat / 100);
+  }, 0);
+
   const grandTotal = subtotal + vatTotal;
 
   const handleSave = () => {
-    if (!clientName || lineItems.some((item) => !item.description)) {
-      toast({
-        title: "Error",
-        description: "Please complete all required fields.",
-        variant: "destructive",
-      });
+    if (!clientName.trim()) {
       return;
     }
 
-    toast({
-      title: "Success",
-      description: `Invoice ${invoiceNo} saved successfully.`,
-    });
+    const items = lineItems
+      .filter(item => item.description.trim())
+      .map(item => ({
+        description: item.description,
+        qty: parseFloat(item.qty.toString()) || 0,
+        unit_price: parseFloat(item.unitPrice.toString()) || 0,
+        vat_percent: parseFloat(item.vatPercent.toString()) || 0,
+        sort_order: 0,
+      }));
+
+    if (items.length === 0) {
+      return;
+    }
+
+    createInvoice(
+      {
+        invoice: {
+          date_issued: date,
+          client_name: clientName,
+          client_email: clientEmail || null,
+          client_phone: clientPhone || null,
+          billing_address: billingAddress || null,
+          reference: reference || null,
+          status,
+          notes: notes || null,
+          currency_label: settings?.currency_label || "Ksh",
+          pdf_url: null,
+        },
+        items,
+      },
+      {
+        onSuccess: () => {
+          navigate("/history");
+        },
+      }
+    );
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground">Create New Invoice</h2>
-        <p className="text-muted-foreground">Fill in client and item details. Totals update automatically.</p>
+        <p className="text-muted-foreground">Invoice number will be generated automatically.</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
         <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Invoice Details</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Invoice Number</Label>
-                  <Input value={invoiceNo} disabled className="bg-muted" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Date Issued</Label>
-                  <Input type="date" defaultValue={new Date().toISOString().split('T')[0]} />
-                </div>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Reference (Optional)</Label>
+                <Input
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
+                  placeholder="PO or reference number"
+                />
               </div>
               <div className="space-y-2">
+                <Label>Date</Label>
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
                 <Label>Status</Label>
-                <Select value={status} onValueChange={setStatus}>
+                <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="paid">Paid</SelectItem>
                     <SelectItem value="unpaid">Unpaid</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -129,9 +195,9 @@ export default function CreateInvoice() {
                   placeholder="Enter client name"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Client Email</Label>
+                  <Label>Email</Label>
                   <Input
                     type="email"
                     value={clientEmail}
@@ -140,7 +206,7 @@ export default function CreateInvoice() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Client Phone</Label>
+                  <Label>Phone</Label>
                   <Input
                     value={clientPhone}
                     onChange={(e) => setClientPhone(e.target.value)}
@@ -161,7 +227,7 @@ export default function CreateInvoice() {
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-lg">Line Items</CardTitle>
               <Button onClick={addLineItem} size="sm" variant="outline" className="gap-2">
                 <Plus className="h-4 w-4" />
@@ -178,7 +244,7 @@ export default function CreateInvoice() {
                         onClick={() => removeLineItem(item.id)}
                         size="sm"
                         variant="ghost"
-                        className="h-8 w-8 p-0 text-destructive"
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -197,19 +263,22 @@ export default function CreateInvoice() {
                       <Label>Qty</Label>
                       <Input
                         type="number"
-                        min="1"
+                        min="0"
+                        step="1"
                         value={item.qty}
-                        onChange={(e) => updateLineItem(item.id, "qty", Number(e.target.value))}
+                        onChange={(e) => updateLineItem(item.id, "qty", e.target.value)}
+                        placeholder="1"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Unit Price (Ksh)</Label>
+                      <Label>Unit Price</Label>
                       <Input
                         type="number"
                         min="0"
                         step="0.01"
                         value={item.unitPrice}
-                        onChange={(e) => updateLineItem(item.id, "unitPrice", Number(e.target.value))}
+                        onChange={(e) => updateLineItem(item.id, "unitPrice", e.target.value)}
+                        placeholder="0.00"
                       />
                     </div>
                     <div className="space-y-2">
@@ -219,107 +288,127 @@ export default function CreateInvoice() {
                         min="0"
                         max="100"
                         value={item.vatPercent}
-                        onChange={(e) => updateLineItem(item.id, "vatPercent", Number(e.target.value))}
+                        onChange={(e) => updateLineItem(item.id, "vatPercent", e.target.value)}
+                        placeholder="16"
                       />
                     </div>
                   </div>
-                  <div className="text-sm font-medium text-right">
-                    Line Total: Ksh {calculateLineTotal(item).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <div className="text-sm font-medium text-right text-muted-foreground">
+                    Line Total: {settings?.currency_label || "Ksh"} {calculateLineTotal(item).toLocaleString()}
                   </div>
                 </div>
               ))}
             </CardContent>
           </Card>
 
-          <div className="flex gap-3">
-            <Button onClick={handleSave} className="flex-1">
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Additional Notes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Any additional information or payment terms..."
+                  rows={3}
+                />
+              </CardContent>
+            </Card>
+
+            <Button onClick={handleSave} className="w-full" size="lg">
               Save Invoice
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <FileDown className="h-4 w-4" />
-              Generate PDF
             </Button>
           </div>
         </div>
 
-        <div>
-          <Card className="sticky top-24">
-            <CardHeader>
-              <CardTitle className="text-lg">Invoice Preview</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="border-t-4 border-primary p-6 space-y-4 bg-muted/30 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="h-8 w-8 rounded bg-primary flex items-center justify-center">
-                        <span className="text-sm font-bold text-primary-foreground">MP</span>
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-sm">Master Piece International</h3>
-                        <p className="text-xs text-muted-foreground">Supplies and Services</p>
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground space-y-0.5">
-                      <p>Lunga Lunga Business Complex</p>
-                      <p>Industrial Area, Nairobi, Kenya</p>
-                      <p>+254 728 268 660</p>
-                      <p>info@mpissl.co.ke</p>
-                    </div>
+        {/* Invoice Preview */}
+        <Card className="lg:sticky lg:top-6 lg:h-fit">
+          <CardHeader className="border-b bg-muted/30">
+            <div className="space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border overflow-hidden bg-white mb-2">
+                    <img src={logo} alt="Master Piece Logo" className="h-full w-full object-contain p-1" />
                   </div>
-                  <div className="text-right">
-                    <h4 className="text-xl font-bold text-primary">INVOICE</h4>
-                    <p className="text-sm font-medium">{invoiceNo}</p>
-                  </div>
+                  <h2 className="text-xs font-medium text-muted-foreground">
+                    {settings?.company_name || "Master Piece International Supplies and Services"}
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PIN: {settings?.company_pin || "P051566058Q"}
+                  </p>
                 </div>
-
-                <div className="border-t pt-4 space-y-2">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Bill To:</p>
-                    <p className="font-medium">{clientName || "Client Name"}</p>
-                    {clientEmail && <p className="text-sm">{clientEmail}</p>}
-                    {clientPhone && <p className="text-sm">{clientPhone}</p>}
-                  </div>
-                </div>
-
-                <div className="border-t pt-4">
-                  <div className="space-y-2">
-                    {lineItems.map((item, index) => (
-                      item.description && (
-                        <div key={item.id} className="text-sm flex justify-between">
-                          <span>{index + 1}. {item.description} (x{item.qty})</span>
-                          <span className="font-medium">
-                            Ksh {calculateLineTotal(item).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                      )
-                    ))}
-                  </div>
-                </div>
-
-                <div className="border-t pt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Subtotal:</span>
-                    <span>Ksh {subtotal.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>VAT Total:</span>
-                    <span>Ksh {vatTotal.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold border-t pt-2">
-                    <span>Grand Total:</span>
-                    <span className="text-primary">Ksh {grandTotal.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                </div>
-
-                <div className="border-t pt-4 text-xs text-muted-foreground">
-                  <p>Payment due within 7 days of receipt.</p>
-                  <p className="mt-2 font-medium">Thank you for your business.</p>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-primary">Auto-Generated</div>
+                  <div className="text-xs text-muted-foreground mt-1">{date}</div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t text-xs">
+                <div>
+                  <p className="font-medium mb-1">Company Details:</p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {settings?.address || "Lunga Lunga Business Complex, Industrial Area, Nairobi, Kenya"}<br />
+                    {settings?.phone_1 || "+254 728 268 660"}<br />
+                    {settings?.email || "info@mpissl.co.ke"}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium mb-1">Bill To:</p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {clientName || "Client Name"}<br />
+                    {clientEmail && <>{clientEmail}<br /></>}
+                    {clientPhone && <>{clientPhone}</>}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-4 space-y-4">
+            <div className="text-xs font-medium text-muted-foreground border-b pb-2">
+              INVOICE ITEMS
+            </div>
+
+            {lineItems.filter(item => item.description).length > 0 ? (
+              <div className="space-y-3">
+                {lineItems.filter(item => item.description).map((item, index) => (
+                  <div key={item.id} className="text-sm flex justify-between items-start gap-2">
+                    <div className="flex-1">
+                      <div className="font-medium">{item.description}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {item.qty} × {settings?.currency_label || "Ksh"} {parseFloat(item.unitPrice.toString() || "0").toLocaleString()} 
+                        {item.vatPercent && ` (VAT ${item.vatPercent}%)`}
+                      </div>
+                    </div>
+                    <div className="font-medium text-nowrap">
+                      {settings?.currency_label || "Ksh"} {calculateLineTotal(item).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground text-center py-8">
+                No items added yet
+              </div>
+            )}
+
+            <div className="border-t pt-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal:</span>
+                <span className="font-medium">{settings?.currency_label || "Ksh"} {subtotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">VAT:</span>
+                <span className="font-medium">{settings?.currency_label || "Ksh"} {vatTotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-lg font-bold border-t pt-2">
+                <span>Grand Total:</span>
+                <span className="text-primary">{settings?.currency_label || "Ksh"} {grandTotal.toLocaleString()}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
