@@ -14,16 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      company_settings: {
+        Row: {
+          address: string | null
+          company_name: string
+          company_pin: string
+          created_at: string
+          currency_label: string
+          default_vat_percent: number
+          email: string | null
+          id: string
+          invoice_prefix: string
+          logo_url: string | null
+          payment_terms_days: number
+          payment_terms_text: string | null
+          phone_1: string | null
+          phone_2: string | null
+          phone_3: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          company_name?: string
+          company_pin?: string
+          created_at?: string
+          currency_label?: string
+          default_vat_percent?: number
+          email?: string | null
+          id?: string
+          invoice_prefix?: string
+          logo_url?: string | null
+          payment_terms_days?: number
+          payment_terms_text?: string | null
+          phone_1?: string | null
+          phone_2?: string | null
+          phone_3?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          company_name?: string
+          company_pin?: string
+          created_at?: string
+          currency_label?: string
+          default_vat_percent?: number
+          email?: string | null
+          id?: string
+          invoice_prefix?: string
+          logo_url?: string | null
+          payment_terms_days?: number
+          payment_terms_text?: string | null
+          phone_1?: string | null
+          phone_2?: string | null
+          phone_3?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      invoice_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          line_total: number
+          qty: number
+          sort_order: number
+          unit_price: number
+          vat_percent: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          line_total?: number
+          qty: number
+          sort_order?: number
+          unit_price: number
+          vat_percent?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          line_total?: number
+          qty?: number
+          sort_order?: number
+          unit_price?: number
+          vat_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          billing_address: string | null
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          currency_label: string
+          date_issued: string
+          grand_total: number
+          id: string
+          invoice_no: string
+          notes: string | null
+          pdf_url: string | null
+          reference: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          updated_at: string
+          vat_total: number
+        }
+        Insert: {
+          billing_address?: string | null
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          currency_label?: string
+          date_issued?: string
+          grand_total?: number
+          id?: string
+          invoice_no: string
+          notes?: string | null
+          pdf_url?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          updated_at?: string
+          vat_total?: number
+        }
+        Update: {
+          billing_address?: string | null
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          currency_label?: string
+          date_issued?: string
+          grand_total?: number
+          id?: string
+          invoice_no?: string
+          notes?: string | null
+          pdf_url?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          updated_at?: string
+          vat_total?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_invoice_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      update_overdue_invoices: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      invoice_status: "paid" | "unpaid" | "overdue"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +317,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      invoice_status: ["paid", "unpaid", "overdue"],
+    },
   },
 } as const
