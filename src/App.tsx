@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import CreateInvoice from "./pages/CreateInvoice";
+import EditInvoice from "./pages/EditInvoice";
 import InvoiceHistory from "./pages/InvoiceHistory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
@@ -23,6 +24,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/create" element={<CreateInvoice />} />
+            <Route path="/edit/:invoiceId" element={<EditInvoice />} />
             <Route path="/history" element={<InvoiceHistory />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />

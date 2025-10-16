@@ -1,28 +1,82 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, DollarSign, FileText } from "lucide-react";
+import { useInvoices } from "@/hooks/useInvoices";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 export default function Reports() {
+  const { invoices, isLoading } = useInvoices();
+  const { settings } = useCompanySettings();
+
+  if (isLoading || !settings) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Loading reports...</p>
+      </div>
+    );
+  }
+
+  const now = new Date();
+  const currentMonthStart = startOfMonth(now);
+  const currentMonthEnd = endOfMonth(now);
+  const lastMonthStart = startOfMonth(subMonths(now, 1));
+  const lastMonthEnd = endOfMonth(subMonths(now, 1));
+
+  // Current month data
+  const currentMonthInvoices = invoices.filter((inv) => {
+    const date = new Date(inv.date_issued);
+    return date >= currentMonthStart && date <= currentMonthEnd;
+  });
+
+  const currentMonthRevenue = currentMonthInvoices
+    .filter((inv) => inv.status === "paid")
+    .reduce((sum, inv) => sum + inv.grand_total, 0);
+
+  const unpaidTotal = invoices
+    .filter((inv) => inv.status === "unpaid" || inv.status === "overdue")
+    .reduce((sum, inv) => sum + inv.grand_total, 0);
+
+  const unpaidCount = invoices.filter(
+    (inv) => inv.status === "unpaid" || inv.status === "overdue"
+  ).length;
+
+  // Last month data for trends
+  const lastMonthInvoices = invoices.filter((inv) => {
+    const date = new Date(inv.date_issued);
+    return date >= lastMonthStart && date <= lastMonthEnd;
+  });
+
+  const lastMonthRevenue = lastMonthInvoices
+    .filter((inv) => inv.status === "paid")
+    .reduce((sum, inv) => sum + inv.grand_total, 0);
+
+  const revenueGrowth = lastMonthRevenue > 0
+    ? parseFloat((((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100).toFixed(1))
+    : 0;
+
+  const invoiceGrowth = currentMonthInvoices.length - lastMonthInvoices.length;
+
   const summaryData = [
     {
       title: "Total Revenue (This Month)",
-      value: "Ksh 452,350",
-      description: "January 2025",
+      value: `${settings.currency_label} ${currentMonthRevenue.toLocaleString()}`,
+      description: now.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       icon: DollarSign,
-      trend: "+12.5% from last month",
+      trend: `${revenueGrowth > 0 ? "+" : ""}${revenueGrowth}% from last month`,
     },
     {
       title: "Unpaid Total",
-      value: "Ksh 192,750",
+      value: `${settings.currency_label} ${unpaidTotal.toLocaleString()}`,
       description: "Outstanding amount",
       icon: TrendingUp,
-      trend: "5 unpaid invoices",
+      trend: `${unpaidCount} unpaid invoices`,
     },
     {
       title: "Invoices Issued",
-      value: "24",
+      value: currentMonthInvoices.length.toString(),
       description: "This month",
       icon: FileText,
-      trend: "+3 from last month",
+      trend: `${invoiceGrowth > 0 ? "+" : ""}${invoiceGrowth} from last month`,
     },
   ];
 
@@ -71,27 +125,42 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="h-[300px] flex items-center justify-center">
             <div className="space-y-4 w-full max-w-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-4 w-4 rounded-full bg-success"></div>
-                  <span className="text-sm">Paid</span>
-                </div>
-                <span className="font-semibold">18 (75%)</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-4 w-4 rounded-full bg-warning"></div>
-                  <span className="text-sm">Unpaid</span>
-                </div>
-                <span className="font-semibold">5 (21%)</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-4 w-4 rounded-full bg-destructive"></div>
-                  <span className="text-sm">Overdue</span>
-                </div>
-                <span className="font-semibold">1 (4%)</span>
-              </div>
+              {(() => {
+                const totalInvoices = invoices.length || 1;
+                const paidCount = invoices.filter((inv) => inv.status === "paid").length;
+                const unpaidCount = invoices.filter((inv) => inv.status === "unpaid").length;
+                const overdueCount = invoices.filter((inv) => inv.status === "overdue").length;
+
+                const paidPercent = ((paidCount / totalInvoices) * 100).toFixed(0);
+                const unpaidPercent = ((unpaidCount / totalInvoices) * 100).toFixed(0);
+                const overduePercent = ((overdueCount / totalInvoices) * 100).toFixed(0);
+
+                return (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-4 w-4 rounded-full bg-success"></div>
+                        <span className="text-sm">Paid</span>
+                      </div>
+                      <span className="font-semibold">{paidCount} ({paidPercent}%)</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-4 w-4 rounded-full bg-warning"></div>
+                        <span className="text-sm">Unpaid</span>
+                      </div>
+                      <span className="font-semibold">{unpaidCount} ({unpaidPercent}%)</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-4 w-4 rounded-full bg-destructive"></div>
+                        <span className="text-sm">Overdue</span>
+                      </div>
+                      <span className="font-semibold">{overdueCount} ({overduePercent}%)</span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </CardContent>
         </Card>

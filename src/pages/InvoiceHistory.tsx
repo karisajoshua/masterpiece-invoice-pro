@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useInvoices, Invoice } from "@/hooks/useInvoices";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,9 +21,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, MoreVertical, Eye, Edit, Trash2, FileDown, CheckCircle2 } from "lucide-react";
-import { useInvoices } from "@/hooks/useInvoices";
-import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { Search, MoreVertical, Eye, Edit, Download, Check, Trash2 } from "lucide-react";
+import { InvoicePreviewDialog } from "@/components/InvoicePreviewDialog";
+import { generateInvoicePDF } from "@/utils/pdfGenerator";
+import { toast } from "@/hooks/use-toast";
 
 const getStatusBadge = (status: string) => {
   const variants: Record<string, "default" | "secondary" | "destructive"> = {
@@ -37,10 +41,14 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function InvoiceHistory() {
-  const { invoices, isLoading, updateInvoiceStatus, deleteInvoice } = useInvoices();
+  const { invoices, isLoading, updateInvoiceStatus, deleteInvoice, getInvoiceItems } = useInvoices();
   const { settings } = useCompanySettings();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewItems, setPreviewItems] = useState<any[]>([]);
 
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch =
@@ -50,8 +58,42 @@ export default function InvoiceHistory() {
     return matchesSearch && matchesFilter;
   });
 
-  if (isLoading) {
-    return <div>Loading...</div>;
+  const handleView = async (invoice: Invoice) => {
+    const items = await getInvoiceItems(invoice.id);
+    setPreviewItems(items);
+    setPreviewInvoice(invoice);
+    setPreviewOpen(true);
+  };
+
+  const handleEdit = (invoiceId: string) => {
+    navigate(`/edit/${invoiceId}`);
+  };
+
+  const handleDownload = async (invoice: Invoice) => {
+    if (!settings) return;
+    try {
+      const items = await getInvoiceItems(invoice.id);
+      const pdf = await generateInvoicePDF(invoice, items, settings);
+      pdf.save(`Invoice-${invoice.invoice_no}.pdf`);
+      toast({
+        title: "PDF Downloaded",
+        description: "Invoice has been downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading || !settings) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Loading invoices...</p>
+      </div>
+    );
   }
 
   return (
@@ -139,16 +181,16 @@ export default function InvoiceHistory() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-popover">
-                          <DropdownMenuItem className="gap-2">
+                          <DropdownMenuItem className="gap-2" onClick={() => handleView(invoice)}>
                             <Eye className="h-4 w-4" />
                             View
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2">
+                          <DropdownMenuItem className="gap-2" onClick={() => handleEdit(invoice.id)}>
                             <Edit className="h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2">
-                            <FileDown className="h-4 w-4" />
+                          <DropdownMenuItem className="gap-2" onClick={() => handleDownload(invoice)}>
+                            <Download className="h-4 w-4" />
                             Download PDF
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -157,7 +199,7 @@ export default function InvoiceHistory() {
                               className="gap-2"
                               onClick={() => updateInvoiceStatus({ id: invoice.id, status: "paid" })}
                             >
-                              <CheckCircle2 className="h-4 w-4" />
+                              <Check className="h-4 w-4" />
                               Mark as Paid
                             </DropdownMenuItem>
                           )}
@@ -188,6 +230,14 @@ export default function InvoiceHistory() {
           </Table>
         </CardContent>
       </Card>
+
+      <InvoicePreviewDialog
+        invoice={previewInvoice}
+        items={previewItems}
+        settings={settings}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
     </div>
   );
 }

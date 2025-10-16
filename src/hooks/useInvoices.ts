@@ -32,6 +32,7 @@ export interface InvoiceItem {
   vat_percent: number;
   line_total: number;
   sort_order: number;
+  created_at: string;
 }
 
 export function useInvoices() {
@@ -78,7 +79,7 @@ export function useInvoices() {
       items,
     }: {
       invoice: Omit<Invoice, "id" | "invoice_no" | "subtotal" | "vat_total" | "grand_total" | "created_at" | "updated_at">;
-      items: Omit<InvoiceItem, "id" | "invoice_id" | "line_total">[];
+      items: Omit<InvoiceItem, "id" | "invoice_id" | "line_total" | "created_at">[];
     }) => {
       // Generate invoice number
       const { data: invoiceNo, error: invoiceNoError } = await supabase.rpc(
@@ -174,12 +175,80 @@ export function useInvoices() {
     },
   });
 
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async ({
+      invoiceId,
+      invoiceData,
+      items,
+    }: {
+      invoiceId: string;
+      invoiceData: Partial<Invoice>;
+      items: InvoiceItem[];
+    }) => {
+      // Update invoice
+      const { error: invoiceError } = await supabase
+        .from("invoices")
+        .update(invoiceData)
+        .eq("id", invoiceId);
+
+      if (invoiceError) throw invoiceError;
+
+      // Delete existing items
+      await supabase.from("invoice_items").delete().eq("invoice_id", invoiceId);
+
+      // Insert new items
+      const itemsToInsert = items.map((item, index) => ({
+        invoice_id: invoiceId,
+        description: item.description,
+        qty: item.qty,
+        unit_price: item.unit_price,
+        vat_percent: item.vat_percent,
+        sort_order: index,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from("invoice_items")
+        .insert(itemsToInsert);
+
+      if (itemsError) throw itemsError;
+
+      return invoiceId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      toast({
+        title: "Invoice Updated",
+        description: "The invoice has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update invoice. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const getInvoiceItems = async (invoiceId: string): Promise<InvoiceItem[]> => {
+    const { data, error } = await supabase
+      .from("invoice_items")
+      .select("*")
+      .eq("invoice_id", invoiceId)
+      .order("sort_order");
+
+    if (error) throw error;
+    return data as InvoiceItem[];
+  };
+
   return {
     invoices,
     isLoading,
     createInvoice: createInvoice.mutate,
+    updateInvoice: updateInvoiceMutation.mutate,
     updateInvoiceStatus: updateInvoiceStatus.mutate,
     deleteInvoice: deleteInvoice.mutate,
+    getInvoiceItems,
   };
 }
 
