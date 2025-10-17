@@ -1,5 +1,6 @@
-import { LayoutDashboard, FilePlus, FolderOpen, BarChart3, Settings } from "lucide-react";
+import { LayoutDashboard, FilePlus, FolderOpen, BarChart3, Settings, LogOut } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Sidebar,
   SidebarContent,
@@ -10,6 +11,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const menuItems = [
@@ -21,28 +24,35 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
+  const { signOut } = useAuth();
+  const { open } = useSidebar();
+
   return (
-    <Sidebar className="border-r border-sidebar-border">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary">
             <span className="text-lg font-bold text-sidebar-primary-foreground">MP</span>
           </div>
-          <div>
-            <h2 className="text-sm font-semibold text-sidebar-foreground">Master Piece</h2>
-            <p className="text-xs text-sidebar-foreground/60">Invoicing Console</p>
-          </div>
+          {open && (
+            <div>
+              <h2 className="text-sm font-semibold text-sidebar-foreground">Master Piece</h2>
+              <p className="text-xs text-sidebar-foreground/60">Invoicing Console</p>
+            </div>
+          )}
         </div>
       </SidebarHeader>
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/60">Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/60">
+            {open ? "Navigation" : ""}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
@@ -55,7 +65,7 @@ export function AppSidebar() {
                       }
                     >
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      {open && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -64,6 +74,17 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="border-t border-sidebar-border p-4">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={signOut} tooltip="Sign Out">
+              <LogOut className="h-4 w-4" />
+              {open && <span>Sign Out</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

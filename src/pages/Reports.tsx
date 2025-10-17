@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, DollarSign, FileText } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
-import { startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
+import { LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 
 export default function Reports() {
   const { invoices, isLoading } = useInvoices();
@@ -80,6 +81,41 @@ export default function Reports() {
     },
   ];
 
+  // Prepare data for Monthly Income Trend chart (last 6 months)
+  const monthlyData = [];
+  for (let i = 5; i >= 0; i--) {
+    const monthDate = subMonths(now, i);
+    const monthStart = startOfMonth(monthDate);
+    const monthEnd = endOfMonth(monthDate);
+    
+    const monthInvoices = invoices.filter((inv) => {
+      const date = new Date(inv.date_issued);
+      return date >= monthStart && date <= monthEnd;
+    });
+    
+    const monthRevenue = monthInvoices
+      .filter((inv) => inv.status === "paid")
+      .reduce((sum, inv) => sum + inv.grand_total, 0);
+    
+    monthlyData.push({
+      month: format(monthDate, "MMM"),
+      revenue: monthRevenue,
+      invoices: monthInvoices.length,
+    });
+  }
+
+  // Prepare data for Payment Status Breakdown chart
+  const totalInvoices = invoices.length || 1;
+  const paidCount = invoices.filter((inv) => inv.status === "paid").length;
+  const unpaidCountForChart = invoices.filter((inv) => inv.status === "unpaid").length;
+  const overdueCount = invoices.filter((inv) => inv.status === "overdue").length;
+
+  const statusData = [
+    { name: "Paid", value: paidCount, color: "hsl(var(--success))" },
+    { name: "Unpaid", value: unpaidCountForChart, color: "hsl(var(--warning))" },
+    { name: "Overdue", value: overdueCount, color: "hsl(var(--destructive))" },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -110,12 +146,42 @@ export default function Reports() {
           <CardHeader>
             <CardTitle className="text-lg">Monthly Income Trend</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px] flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <BarChart3 className="h-16 w-16 mx-auto mb-4 opacity-20" />
-              <p>Chart visualization coming soon</p>
-              <p className="text-xs mt-2">Monthly revenue breakdown and trends</p>
-            </div>
+          <CardContent className="h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="month" 
+                  className="text-xs"
+                  stroke="hsl(var(--muted-foreground))"
+                />
+                <YAxis 
+                  className="text-xs"
+                  stroke="hsl(var(--muted-foreground))"
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                  }}
+                  formatter={(value: number) => [
+                    `${settings.currency_label} ${value.toLocaleString()}`,
+                    "Revenue"
+                  ]}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--primary))", r: 4 }}
+                  activeDot={{ r: 6 }}
+                  name="Revenue"
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
@@ -123,70 +189,40 @@ export default function Reports() {
           <CardHeader>
             <CardTitle className="text-lg">Payment Status Breakdown</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px] flex items-center justify-center">
-            <div className="space-y-4 w-full max-w-sm">
-              {(() => {
-                const totalInvoices = invoices.length || 1;
-                const paidCount = invoices.filter((inv) => inv.status === "paid").length;
-                const unpaidCount = invoices.filter((inv) => inv.status === "unpaid").length;
-                const overdueCount = invoices.filter((inv) => inv.status === "overdue").length;
-
-                const paidPercent = ((paidCount / totalInvoices) * 100).toFixed(0);
-                const unpaidPercent = ((unpaidCount / totalInvoices) * 100).toFixed(0);
-                const overduePercent = ((overdueCount / totalInvoices) * 100).toFixed(0);
-
-                return (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-4 w-4 rounded-full bg-success"></div>
-                        <span className="text-sm">Paid</span>
-                      </div>
-                      <span className="font-semibold">{paidCount} ({paidPercent}%)</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-4 w-4 rounded-full bg-warning"></div>
-                        <span className="text-sm">Unpaid</span>
-                      </div>
-                      <span className="font-semibold">{unpaidCount} ({unpaidPercent}%)</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-4 w-4 rounded-full bg-destructive"></div>
-                        <span className="text-sm">Overdue</span>
-                      </div>
-                      <span className="font-semibold">{overdueCount} ({overduePercent}%)</span>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
+          <CardContent className="h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                  }}
+                  formatter={(value: number) => [
+                    `${value} (${((value / totalInvoices) * 100).toFixed(0)}%)`,
+                    "Invoices"
+                  ]}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
     </div>
-  );
-}
-
-function BarChart3(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M3 3v18h18" />
-      <path d="M18 17V9" />
-      <path d="M13 17V5" />
-      <path d="M8 17v-3" />
-    </svg>
   );
 }

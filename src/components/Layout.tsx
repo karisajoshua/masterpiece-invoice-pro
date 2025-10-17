@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -8,7 +9,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         
@@ -28,6 +29,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <main className="flex-1 p-6">
             {children}
           </main>
+          
+          <Footer />
         </div>
       </div>
     </SidebarProvider>

@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import { Invoice, InvoiceItem } from "@/hooks/useInvoices";
 import { CompanySettings } from "@/hooks/useCompanySettings";
+import masterpieceLogo from "@/assets/masterpiece-logo.png";
 
 export async function generateInvoicePDF(
   invoice: Invoice,
@@ -9,14 +10,12 @@ export async function generateInvoicePDF(
 ) {
   const pdf = new jsPDF();
   
-  // Add company logo if available
-  if (settings.logo_url) {
-    try {
-      const img = await loadImage(settings.logo_url);
-      pdf.addImage(img, "PNG", 15, 10, 40, 20);
-    } catch (error) {
-      console.error("Failed to load logo:", error);
-    }
+  // Add company logo (use static asset)
+  try {
+    const img = await loadImage(masterpieceLogo);
+    pdf.addImage(img, "PNG", 15, 10, 40, 20);
+  } catch (error) {
+    console.error("Failed to load logo:", error);
   }
 
   // Company details
