@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          billing_address: string
+          company_name: string
+          company_pin: string
+          contact_person: string | null
+          created_at: string
+          email: string
+          id: string
+          industry: string | null
+          is_active: boolean | null
+          phone_primary: string
+          phone_secondary: string | null
+          physical_address: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          billing_address: string
+          company_name: string
+          company_pin: string
+          contact_person?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          industry?: string | null
+          is_active?: boolean | null
+          phone_primary: string
+          phone_secondary?: string | null
+          physical_address?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          billing_address?: string
+          company_name?: string
+          company_pin?: string
+          contact_person?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          industry?: string | null
+          is_active?: boolean | null
+          phone_primary?: string
+          phone_secondary?: string | null
+          physical_address?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       company_settings: {
         Row: {
           address: string | null
@@ -117,8 +168,10 @@ export type Database = {
       }
       invoices: {
         Row: {
+          balance_due: number | null
           billing_address: string | null
           client_email: string | null
+          client_id: string | null
           client_name: string
           client_phone: string | null
           created_at: string
@@ -128,16 +181,20 @@ export type Database = {
           id: string
           invoice_no: string
           notes: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
           pdf_url: string | null
           reference: string | null
           status: Database["public"]["Enums"]["invoice_status"]
           subtotal: number
+          total_paid: number | null
           updated_at: string
           vat_total: number
         }
         Insert: {
+          balance_due?: number | null
           billing_address?: string | null
           client_email?: string | null
+          client_id?: string | null
           client_name: string
           client_phone?: string | null
           created_at?: string
@@ -147,16 +204,20 @@ export type Database = {
           id?: string
           invoice_no: string
           notes?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
           pdf_url?: string | null
           reference?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number
+          total_paid?: number | null
           updated_at?: string
           vat_total?: number
         }
         Update: {
+          balance_due?: number | null
           billing_address?: string | null
           client_email?: string | null
+          client_id?: string | null
           client_name?: string
           client_phone?: string | null
           created_at?: string
@@ -166,12 +227,127 @@ export type Database = {
           id?: string
           invoice_no?: string
           notes?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
           pdf_url?: string | null
           reference?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number
+          total_paid?: number | null
           updated_at?: string
           vat_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount_paid: number
+          approval_notes: string | null
+          approved_at: string | null
+          approved_by_admin_id: string | null
+          created_at: string
+          id: string
+          invoice_id: string
+          payment_date: string
+          payment_method: string
+          payment_reference: string
+          proof_of_payment_url: string | null
+          status: string | null
+          submitted_by_client_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_paid: number
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by_admin_id?: string | null
+          created_at?: string
+          id?: string
+          invoice_id: string
+          payment_date: string
+          payment_method: string
+          payment_reference: string
+          proof_of_payment_url?: string | null
+          status?: string | null
+          submitted_by_client_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by_admin_id?: string | null
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          payment_date?: string
+          payment_method?: string
+          payment_reference?: string
+          proof_of_payment_url?: string | null
+          status?: string | null
+          submitted_by_client_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_submitted_by_client_id_fkey"
+            columns: ["submitted_by_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string | null
+          created_at: string
+          default_unit_price: number
+          default_vat_percent: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          product_code: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          default_unit_price: number
+          default_vat_percent?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          product_code: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          default_unit_price?: number
+          default_vat_percent?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          product_code?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -220,6 +396,11 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       invoice_status: "paid" | "unpaid" | "overdue"
+      payment_status:
+        | "not_started"
+        | "partial"
+        | "paid_pending_approval"
+        | "fully_paid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -349,6 +530,12 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       invoice_status: ["paid", "unpaid", "overdue"],
+      payment_status: [
+        "not_started",
+        "partial",
+        "paid_pending_approval",
+        "fully_paid",
+      ],
     },
   },
 } as const
