@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AdminRoute } from "./components/AdminRoute";
+import { ClientRoute } from "./components/ClientRoute";
 import { Layout } from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import CreateInvoice from "./pages/CreateInvoice";
@@ -12,6 +14,8 @@ import EditInvoice from "./pages/EditInvoice";
 import InvoiceHistory from "./pages/InvoiceHistory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import ClientDashboard from "./pages/client/ClientDashboard";
+import PaymentApprovals from "./pages/admin/PaymentApprovals";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -26,21 +30,44 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            
+            {/* Admin Routes */}
             <Route
               path="/*"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/create" element={<CreateInvoice />} />
-                      <Route path="/edit/:invoiceId" element={<EditInvoice />} />
-                      <Route path="/history" element={<InvoiceHistory />} />
-                      <Route path="/reports" element={<Reports />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Layout>
+                  <AdminRoute>
+                    <Layout>
+                      <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/create" element={<CreateInvoice />} />
+                        <Route path="/edit/:invoiceId" element={<EditInvoice />} />
+                        <Route path="/history" element={<InvoiceHistory />} />
+                        <Route path="/reports" element={<Reports />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/admin/payments" element={<PaymentApprovals />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Layout>
+                  </AdminRoute>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Client Routes */}
+            <Route
+              path="/client/*"
+              element={
+                <ProtectedRoute>
+                  <ClientRoute>
+                    <Layout>
+                      <Routes>
+                        <Route path="/dashboard" element={<ClientDashboard />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Layout>
+                  </ClientRoute>
                 </ProtectedRoute>
               }
             />

@@ -9,6 +9,10 @@ import { Plus, Trash2 } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { useNavigate } from "react-router-dom";
+import { ClientSearchCombobox } from "@/components/ClientSearchCombobox";
+import { ProductMultiSelect } from "@/components/ProductMultiSelect";
+import { Client } from "@/hooks/useClients";
+import { Product } from "@/hooks/useProducts";
 import logo from "@/assets/masterpiece-logo.png";
 
 interface LineItem {
@@ -26,7 +30,9 @@ export default function CreateInvoice() {
   
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState<"paid" | "unpaid" | "overdue">("unpaid");
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientName, setClientName] = useState("");
+  const [clientPin, setClientPin] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [billingAddress, setBillingAddress] = useState("");
@@ -43,6 +49,28 @@ export default function CreateInvoice() {
       ]);
     }
   }, [settings]);
+
+  const handleClientSelect = (client: Client | null) => {
+    setSelectedClient(client);
+    if (client) {
+      setClientName(client.company_name);
+      setClientPin(client.company_pin);
+      setClientEmail(client.email);
+      setClientPhone(client.phone_primary);
+      setBillingAddress(client.billing_address);
+    }
+  };
+
+  const handleProductsSelect = (products: Product[]) => {
+    const newItems = products.map((product) => ({
+      id: Date.now().toString() + Math.random().toString(),
+      description: product.name,
+      qty: "1",
+      unitPrice: product.default_unit_price.toString(),
+      vatPercent: product.default_vat_percent?.toString() || settings?.default_vat_percent.toString() || "16",
+    }));
+    setLineItems([...lineItems, ...newItems]);
+  };
 
   const addLineItem = () => {
     setLineItems([
@@ -188,12 +216,36 @@ export default function CreateInvoice() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Client Name *</Label>
-                <Input
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  placeholder="Enter client name"
-                />
+                <Label>Select Existing Client</Label>
+                <ClientSearchCombobox value={selectedClient?.id} onSelect={handleClientSelect} />
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or enter manually</span>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Client Name *</Label>
+                  <Input
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    placeholder="Enter client name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Company PIN</Label>
+                  <Input
+                    value={clientPin}
+                    onChange={(e) => setClientPin(e.target.value)}
+                    placeholder="P000000000X"
+                  />
+                </div>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
@@ -229,10 +281,13 @@ export default function CreateInvoice() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-lg">Line Items</CardTitle>
-              <Button onClick={addLineItem} size="sm" variant="outline" className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Item
-              </Button>
+              <div className="flex gap-2">
+                <ProductMultiSelect onProductsSelect={handleProductsSelect} />
+                <Button onClick={addLineItem} size="sm" variant="outline" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Item
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {lineItems.map((item, index) => (
