@@ -95,20 +95,26 @@ export async function generateInvoicePDF(
   // Totals section with blue background
   yPos += 10;
   pdf.setFillColor(39, 42, 108);
-  pdf.rect(15, yPos - 5, 180, 22, "F");
+  pdf.rect(15, yPos - 5, 180, 28, "F");
   
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(10);
-  pdf.text("Subtotal:", 140, yPos);
-  pdf.text(`${settings.currency_label} ${invoice.subtotal.toLocaleString()}`, 175, yPos);
-  yPos += 6;
-  pdf.text("VAT Total:", 140, yPos);
-  pdf.text(`${settings.currency_label} ${invoice.vat_total.toLocaleString()}`, 175, yPos);
-  yPos += 8;
-  pdf.setFontSize(12);
-  pdf.text("GRAND TOTAL:", 140, yPos);
-  pdf.text(`${settings.currency_label} ${invoice.grand_total.toLocaleString()}`, 175, yPos);
+  pdf.setFontSize(11);
+  
+  // Subtotal
+  pdf.text("Subtotal:", 25, yPos);
+  pdf.text(`${settings.currency_label} ${invoice.subtotal.toLocaleString()}`, 185, yPos, { align: "right" });
+  
+  yPos += 7;
+  // VAT Total
+  pdf.text("VAT Total:", 25, yPos);
+  pdf.text(`${settings.currency_label} ${invoice.vat_total.toLocaleString()}`, 185, yPos, { align: "right" });
+  
+  yPos += 10;
+  // Grand Total - larger and prominent
+  pdf.setFontSize(13);
+  pdf.text("GRAND TOTAL:", 25, yPos);
+  pdf.text(`${settings.currency_label} ${invoice.grand_total.toLocaleString()}`, 185, yPos, { align: "right" });
   
   yPos += 10;
   pdf.setTextColor(0, 0, 0);
