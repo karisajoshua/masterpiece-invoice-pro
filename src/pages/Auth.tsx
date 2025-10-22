@@ -80,7 +80,7 @@ export default function Auth() {
 
     if (accountType === "client") {
       const clientValidation = clientRegistrationSchema.safeParse({
-        accountType,
+        accountType: "company",
         email: signUpEmail,
         password: signUpPassword,
         confirmPassword: signUpPassword,
