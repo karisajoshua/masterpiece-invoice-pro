@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { ClientRoute } from "./components/ClientRoute";
 import { Layout } from "./components/Layout";
+import { ClientLayout } from "./components/ClientLayout";
 import Dashboard from "./pages/Dashboard";
 import CreateInvoice from "./pages/CreateInvoice";
 import EditInvoice from "./pages/EditInvoice";
@@ -61,12 +62,12 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ClientRoute>
-                    <Layout>
+                    <ClientLayout>
                       <Routes>
                         <Route path="/dashboard" element={<ClientDashboard />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
-                    </Layout>
+                    </ClientLayout>
                   </ClientRoute>
                 </ProtectedRoute>
               }

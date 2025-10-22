@@ -1,29 +1,12 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
+  const { isAdmin, loading } = useUserRole();
 
-  const { data: isAdmin, isLoading } = useQuery({
-    queryKey: ["user-role", user?.id],
-    queryFn: async () => {
-      if (!user) return false;
-      
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data?.role === "admin";
-    },
-    enabled: !!user,
-  });
-
-  if (loading || isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-muted-foreground">Loading...</p>
