@@ -80,11 +80,18 @@ export default function Auth() {
 
     if (accountType === "client") {
       const clientValidation = clientRegistrationSchema.safeParse({
+        accountType,
+        email: signUpEmail,
+        password: signUpPassword,
+        confirmPassword: signUpPassword,
         companyName,
         companyPin,
         contactPerson,
         phonePrimary,
+        phoneSecondary,
         billingAddress,
+        physicalAddress,
+        industry,
       });
       if (!clientValidation.success) {
         toast({
