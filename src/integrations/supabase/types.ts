@@ -377,10 +377,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_invoice_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_invoice_number: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -388,13 +385,10 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_overdue_invoices: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      update_overdue_invoices: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "client"
       invoice_status: "paid" | "unpaid" | "overdue"
       payment_status:
         | "not_started"
@@ -528,7 +522,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "client"],
       invoice_status: ["paid", "unpaid", "overdue"],
       payment_status: [
         "not_started",
