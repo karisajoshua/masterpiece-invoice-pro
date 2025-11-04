@@ -17,6 +17,7 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import ClientDashboard from "./pages/client/ClientDashboard";
 import PaymentApprovals from "./pages/admin/PaymentApprovals";
+import DocumentManagement from "./pages/admin/DocumentManagement";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -48,6 +49,7 @@ const App = () => (
                         <Route path="/reports" element={<Reports />} />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="/admin/payments" element={<PaymentApprovals />} />
+                        <Route path="/admin/documents" element={<DocumentManagement />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Layout>

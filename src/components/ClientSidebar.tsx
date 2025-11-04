@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, CreditCard, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, Settings, LogOut } from "lucide-react";
 import logoImage from "@/assets/masterpiece-logo.png";
 
 const menuItems = [

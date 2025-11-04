@@ -15,7 +15,7 @@ export function ClientRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user || !isClient) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   return <>{children}</>;

@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_documents: {
+        Row: {
+          admin_notes: string | null
+          client_id: string
+          created_at: string
+          document_name: string
+          document_type: string
+          document_url: string
+          file_size: number
+          id: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by_admin_id: string | null
+          status: Database["public"]["Enums"]["document_status"]
+          submitted_by_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          client_id: string
+          created_at?: string
+          document_name: string
+          document_type: string
+          document_url: string
+          file_size: number
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by_admin_id?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          submitted_by_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          client_id?: string
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          document_url?: string
+          file_size?: number
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by_admin_id?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          submitted_by_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           billing_address: string
@@ -389,6 +448,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "client"
+      document_status: "pending" | "reviewed" | "approved" | "rejected"
       invoice_status: "paid" | "unpaid" | "overdue"
       payment_status:
         | "not_started"
@@ -523,6 +583,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "client"],
+      document_status: ["pending", "reviewed", "approved", "rejected"],
       invoice_status: ["paid", "unpaid", "overdue"],
       payment_status: [
         "not_started",

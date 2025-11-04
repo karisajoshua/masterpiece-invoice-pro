@@ -2,11 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Clock, CheckCircle2, FileText } from "lucide-react";
+import { DollarSign, Clock, CheckCircle2, FileText, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { PaymentSubmissionDialog } from "@/components/client/PaymentSubmissionDialog";
+import { DocumentSubmissionForm } from "@/components/client/DocumentSubmissionForm";
+import { useClientDocuments } from "@/hooks/useClientDocuments";
+import { format } from "date-fns";
 
 export default function ClientDashboard() {
   const { user } = useAuth();
@@ -54,6 +57,8 @@ export default function ClientDashboard() {
     enabled: !!client,
   });
 
+  const { documents, submitDocument, isSubmitting } = useClientDocuments(client?.id);
+
   const totalOutstanding = invoices.reduce((sum, inv) => sum + (inv.balance_due || 0), 0);
   const pendingApprovals = payments.filter((p) => p.status === "pending").length;
   const paidThisMonth = payments
@@ -69,6 +74,36 @@ export default function ClientDashboard() {
       case "fully_paid": return "default";
       default: return "secondary";
     }
+  };
+
+  const getDocumentStatusBadge = (status: string) => {
+    const variants = {
+      pending: "secondary",
+      reviewed: "default",
+      approved: "default",
+      rejected: "destructive",
+    } as const;
+    return <Badge variant={variants[status as keyof typeof variants]}>{status}</Badge>;
+  };
+
+  const downloadDocument = async (documentUrl: string, fileName: string) => {
+    const { data, error } = await supabase.storage
+      .from("client-documents")
+      .download(documentUrl);
+
+    if (error) {
+      console.error("Error downloading:", error);
+      return;
+    }
+
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -195,6 +230,57 @@ export default function ClientDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Document Submission and List */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <DocumentSubmissionForm
+          clientId={client?.id || ""}
+          onSubmit={submitDocument}
+          isSubmitting={isSubmitting}
+        />
+
+        {/* My Documents */}
+        <Card>
+          <CardHeader>
+            <CardTitle>My Documents</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {documents.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No documents submitted yet
+                </p>
+              ) : (
+                documents.slice(0, 5).map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                    <div className="space-y-1">
+                      <p className="font-medium text-sm">{doc.document_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(doc.created_at), "MMM d, yyyy")} • {doc.document_type}
+                      </p>
+                      {doc.admin_notes && (
+                        <p className="text-xs text-muted-foreground italic">
+                          Admin: {doc.admin_notes}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getDocumentStatusBadge(doc.status)}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => downloadDocument(doc.document_url, doc.document_name)}
+                      >
+                        <Download className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {selectedInvoiceId && (
         <PaymentSubmissionDialog

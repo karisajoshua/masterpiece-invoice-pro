@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { FileText, CheckCircle2, Clock, AlertCircle, Upload } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,6 +11,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { useAdminDocuments } from "@/hooks/useAdminDocuments";
+import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -29,6 +33,8 @@ const getStatusBadge = (status: string) => {
 export default function Dashboard() {
   const { invoices, isLoading } = useInvoices();
   const { settings } = useCompanySettings();
+  const { documents } = useAdminDocuments();
+  const navigate = useNavigate();
 
   const totalInvoices = invoices.length;
   const paidInvoices = invoices.filter(inv => inv.status === "paid").length;
@@ -136,6 +142,47 @@ export default function Dashboard() {
               )}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      {/* Recent Client Documents */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-lg">Recent Client Documents</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {documents.filter(d => d.status === "pending").length} pending review
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/documents")}>
+            View All
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {documents.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Upload className="mx-auto h-12 w-12 mb-2 opacity-50" />
+              <p>No documents submitted yet</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {documents.slice(0, 5).map((doc) => (
+                <div key={doc.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                  <div className="space-y-1">
+                    <p className="font-medium text-sm">{doc.document_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {doc.clients.company_name} • {format(new Date(doc.created_at), "MMM d, yyyy")}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={doc.status === "pending" ? "secondary" : "default"}>
+                      {doc.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
