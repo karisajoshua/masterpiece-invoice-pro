@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,13 +35,28 @@ export default function Auth() {
   const [physicalAddress, setPhysicalAddress] = useState("");
   const [industry, setIndustry] = useState("");
   const { signIn, signUp, user } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirect if already logged in
-  if (user) {
-    navigate("/");
-    return null;
+  // Redirect authenticated users based on their role
+  useEffect(() => {
+    if (user && !roleLoading) {
+      if (role === "admin") {
+        navigate("/");
+      } else if (role === "client") {
+        navigate("/client/dashboard");
+      }
+    }
+  }, [user, role, roleLoading, navigate]);
+
+  // Show loading while checking authentication and role
+  if (user && roleLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
