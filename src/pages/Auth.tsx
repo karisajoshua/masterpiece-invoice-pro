@@ -46,9 +46,21 @@ export default function Auth() {
         navigate("/");
       } else if (role === "client") {
         navigate("/client/dashboard");
+      } else if (role === "user" || !role) {
+        // User has no valid role assigned
+        toast({
+          title: "Access Denied",
+          description: "Your account doesn't have a valid role assigned. Please contact an administrator.",
+          variant: "destructive",
+        });
+        // Sign out the user
+        signUp("", "").then(() => {
+          setSignInEmail("");
+          setSignInPassword("");
+        });
       }
     }
-  }, [user, role, roleLoading, navigate]);
+  }, [user, role, roleLoading, navigate, toast]);
 
   // Show loading while checking authentication and role
   if (user && roleLoading) {
