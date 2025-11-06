@@ -32,13 +32,13 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border p-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary">
-            <span className="text-lg font-bold text-sidebar-primary-foreground">MP</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+            <span className="text-lg font-bold text-white">MP</span>
           </div>
           {open && (
             <div>
-              <h2 className="text-sm font-semibold text-sidebar-foreground">Master Piece</h2>
-              <p className="text-xs text-sidebar-foreground/60">Invoicing Console</p>
+              <h2 className="text-sm font-semibold text-white">Master Piece</h2>
+              <p className="text-xs text-white/70">Invoicing Console</p>
             </div>
           )}
         </div>
@@ -46,7 +46,7 @@ export function AppSidebar() {
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/60">
+          <SidebarGroupLabel className="text-white/70">
             {open ? "Navigation" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -60,8 +60,8 @@ export function AppSidebar() {
                       className={({ isActive }) =>
                         `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all ${
                           isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent"
+                            ? "bg-white/20 text-white font-medium"
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
                         }`
                       }
                     >
@@ -79,7 +79,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={signOut} tooltip="Sign Out">
+            <SidebarMenuButton onClick={signOut} tooltip="Sign Out" className="text-white/80 hover:bg-white/10 hover:text-white">
               <LogOut className="h-4 w-4" />
               {open && <span>Sign Out</span>}
             </SidebarMenuButton>

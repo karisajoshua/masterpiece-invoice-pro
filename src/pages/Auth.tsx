@@ -25,7 +25,7 @@ export default function Auth() {
   const [signInPassword, setSignInPassword] = useState("");
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
-  const [accountType, setAccountType] = useState<"admin" | "client">("admin");
+  const [accountType, setAccountType] = useState<"admin" | "client">("client");
   const [companyName, setCompanyName] = useState("");
   const [companyPin, setCompanyPin] = useState("");
   const [contactPerson, setContactPerson] = useState("");
@@ -239,19 +239,6 @@ export default function Auth() {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-3">
-                      <Label>Account Type</Label>
-                      <RadioGroup value={accountType} onValueChange={(v) => setAccountType(v as "admin" | "client")}>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="admin" id="admin" />
-                          <Label htmlFor="admin" className="font-normal cursor-pointer">Admin Account</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="client" id="client" />
-                          <Label htmlFor="client" className="font-normal cursor-pointer">Client Account</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email *</Label>
