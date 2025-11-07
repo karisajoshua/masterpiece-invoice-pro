@@ -1,11 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Clock, CheckCircle2, FileText, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PaymentSubmissionDialog } from "@/components/client/PaymentSubmissionDialog";
 import { DocumentSubmissionForm } from "@/components/client/DocumentSubmissionForm";
 import { useClientDocuments } from "@/hooks/useClientDocuments";
@@ -13,6 +13,7 @@ import { format } from "date-fns";
 
 export default function ClientDashboard() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
 
   const { data: client } = useQuery({
@@ -58,6 +59,31 @@ export default function ClientDashboard() {
   });
 
   const { documents, submitDocument, isSubmitting } = useClientDocuments(client?.id);
+
+  // Real-time subscription for invoices
+  useEffect(() => {
+    if (!client?.id) return;
+
+    const channel = supabase
+      .channel("client-invoices-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "invoices",
+          filter: `client_id=eq.${client.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["client-invoices", client.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [client?.id, queryClient]);
 
   const totalOutstanding = invoices.reduce((sum, inv) => sum + (inv.balance_due || 0), 0);
   const pendingApprovals = payments.filter((p) => p.status === "pending").length;

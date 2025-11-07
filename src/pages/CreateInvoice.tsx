@@ -143,6 +143,7 @@ export default function CreateInvoice() {
     createInvoice(
       {
         invoice: {
+          client_id: selectedClient?.id || null,
           date_issued: date,
           client_name: clientName,
           client_email: clientEmail || null,
