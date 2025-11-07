@@ -14,6 +14,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { clientRegistrationSchema } from "@/schemas/clientRegistration";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import masterpieceLogo from "@/assets/masterpiece-logo.png";
 
 const authSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }).max(255),
@@ -242,7 +243,7 @@ export default function Auth() {
           <div className="mb-8 text-center">
             <div className="flex items-center justify-center mb-4">
               <img 
-                src="/src/assets/masterpiece-logo.png" 
+                src={masterpieceLogo} 
                 alt="Master Piece Logo" 
                 className="h-20 w-auto"
               />
