@@ -6,6 +6,7 @@ import { useEffect } from "react";
 export interface Invoice {
   id: string;
   invoice_no: string;
+  client_id: string | null;
   date_issued: string;
   client_name: string;
   client_email: string | null;
@@ -92,6 +93,7 @@ export function useInvoices() {
       const { data: newInvoice, error: invoiceError } = await supabase
         .from("invoices")
         .insert([{ 
+          client_id: invoice.client_id,
           client_name: invoice.client_name,
           invoice_no: invoiceNo,
           date_issued: invoice.date_issued,
