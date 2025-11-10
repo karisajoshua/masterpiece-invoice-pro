@@ -1,6 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ClientSidebar } from "@/components/ClientSidebar";
 import { Footer } from "@/components/Footer";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,6 +15,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
               <SidebarTrigger />
               <h1 className="text-lg font-semibold text-foreground">Client Portal</h1>
             </div>
+            <NotificationBell />
           </header>
           
           <main className="flex-1 p-6">

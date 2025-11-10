@@ -16,6 +16,10 @@ import InvoiceHistory from "./pages/InvoiceHistory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import ClientDashboard from "./pages/client/ClientDashboard";
+import ClientInvoices from "./pages/client/ClientInvoices";
+import ClientPayments from "./pages/client/ClientPayments";
+import ClientDocuments from "./pages/client/ClientDocuments";
+import ClientProfile from "./pages/client/ClientProfile";
 import PaymentApprovals from "./pages/admin/PaymentApprovals";
 import DocumentManagement from "./pages/admin/DocumentManagement";
 import Auth from "./pages/Auth";
@@ -67,6 +71,10 @@ const App = () => (
                     <ClientLayout>
                       <Routes>
                         <Route path="/dashboard" element={<ClientDashboard />} />
+                        <Route path="/invoices" element={<ClientInvoices />} />
+                        <Route path="/payments" element={<ClientPayments />} />
+                        <Route path="/documents" element={<ClientDocuments />} />
+                        <Route path="/profile" element={<ClientProfile />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </ClientLayout>

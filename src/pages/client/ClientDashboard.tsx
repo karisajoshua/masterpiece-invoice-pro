@@ -2,17 +2,20 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Clock, CheckCircle2, FileText, Download } from "lucide-react";
+import { DollarSign, Clock, CheckCircle2, FileText, Download, ArrowRight, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { PaymentSubmissionDialog } from "@/components/client/PaymentSubmissionDialog";
 import { DocumentSubmissionForm } from "@/components/client/DocumentSubmissionForm";
 import { useClientDocuments } from "@/hooks/useClientDocuments";
 import { format } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function ClientDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
 
@@ -91,6 +94,13 @@ export default function ClientDashboard() {
     .filter((p) => p.status === "approved" && new Date(p.payment_date).getMonth() === new Date().getMonth())
     .reduce((sum, p) => sum + p.amount_paid, 0);
   const activeInvoices = invoices.filter((inv) => inv.payment_status !== "fully_paid").length;
+  
+  // Overdue invoices
+  const overdueInvoices = invoices.filter((inv) => {
+    const dueDate = new Date(inv.date_issued);
+    dueDate.setDate(dueDate.getDate() + 7); // Assuming 7 days payment terms
+    return dueDate < new Date() && inv.payment_status !== "fully_paid";
+  });
 
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
@@ -139,6 +149,19 @@ export default function ClientDashboard() {
         <p className="text-muted-foreground">Here's an overview of your account</p>
       </div>
 
+      {/* Overdue Alert */}
+      {overdueInvoices.length > 0 && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            You have {overdueInvoices.length} overdue invoice{overdueInvoices.length > 1 ? 's' : ''}.{' '}
+            <Button variant="link" className="p-0 h-auto" onClick={() => navigate('/client/invoices')}>
+              View now
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Overview Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -182,10 +205,36 @@ export default function ClientDashboard() {
         </Card>
       </div>
 
-      {/* Recent Invoices */}
+      {/* Quick Actions */}
       <Card>
         <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Button variant="outline" className="h-auto flex-col gap-2 py-4" onClick={() => navigate('/client/invoices')}>
+              <FileText className="h-5 w-5" />
+              <span>View All Invoices</span>
+            </Button>
+            <Button variant="outline" className="h-auto flex-col gap-2 py-4" onClick={() => navigate('/client/payments')}>
+              <DollarSign className="h-5 w-5" />
+              <span>Payment History</span>
+            </Button>
+            <Button variant="outline" className="h-auto flex-col gap-2 py-4" onClick={() => navigate('/client/documents')}>
+              <FileText className="h-5 w-5" />
+              <span>Submit Documents</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent Invoices */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Recent Invoices</CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/client/invoices')}>
+            View All <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -224,8 +273,11 @@ export default function ClientDashboard() {
 
       {/* Payment History */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Payment History</CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/client/payments')}>
+            View All <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -267,8 +319,11 @@ export default function ClientDashboard() {
 
         {/* My Documents */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>My Documents</CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/client/documents')}>
+              View All <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

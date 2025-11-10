@@ -13,19 +13,34 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, FileText, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, CreditCard, FolderOpen, User, LogOut } from "lucide-react";
 import logoImage from "@/assets/masterpiece-logo.png";
 
 const menuItems = [
   {
-    title: "My Dashboard",
+    title: "Dashboard",
     url: "/client/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
+    title: "Invoices",
+    url: "/client/invoices",
+    icon: FileText,
+  },
+  {
+    title: "Payments",
+    url: "/client/payments",
+    icon: CreditCard,
+  },
+  {
+    title: "Documents",
+    url: "/client/documents",
+    icon: FolderOpen,
+  },
+  {
+    title: "Profile",
+    url: "/client/profile",
+    icon: User,
   },
 ];
 
