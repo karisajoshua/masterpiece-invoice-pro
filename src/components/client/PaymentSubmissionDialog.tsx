@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { usePayments } from "@/hooks/usePayments";
 import { useToast } from "@/hooks/use-toast";
+import { Upload, CheckCircle } from "lucide-react";
 
 interface PaymentSubmissionDialogProps {
   invoiceId: string;
@@ -135,108 +137,127 @@ export function PaymentSubmissionDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-0">
+        <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle>Submit Payment</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="rounded-lg border p-4 space-y-2 bg-muted/30">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Invoice No:</span>
-              <span className="font-medium">{invoice.invoice_no}</span>
+        <ScrollArea className="max-h-[calc(90vh-8rem)] px-6">
+          <div className="space-y-6 pb-6">
+            {/* Invoice Summary */}
+            <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+              <h3 className="font-semibold text-base">Invoice Summary</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground mb-1">Invoice Number</p>
+                  <p className="font-medium">{invoice.invoice_no}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground mb-1">Total Amount</p>
+                  <p className="font-medium">Ksh {invoice.grand_total.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground mb-1">Amount Paid</p>
+                  <p className="font-medium">Ksh {invoice.total_paid.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground mb-1">Balance Due</p>
+                  <p className="font-medium text-primary">Ksh {invoice.balance_due.toLocaleString()}</p>
+                </div>
+              </div>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Total Amount:</span>
-              <span className="font-medium">Ksh {invoice.grand_total.toLocaleString()}</span>
+
+            {/* Payment Details Form */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Amount to Pay *</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max={invoice.balance_due}
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className="text-base"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Payment Date *</Label>
+                <Input
+                  type="date"
+                  value={paymentDate}
+                  onChange={(e) => setPaymentDate(e.target.value)}
+                  className="text-base"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Payment Method *</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger className="text-base">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="mpesa">M-Pesa</SelectItem>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="cheque">Cheque</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Transaction Reference *</Label>
+                <Input
+                  value={transactionRef}
+                  onChange={(e) => setTransactionRef(e.target.value)}
+                  placeholder="Enter transaction ID or reference"
+                  className="text-base"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Proof of Payment (Optional)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    className="text-base"
+                  />
+                  {uploading && <Upload className="w-5 h-5 animate-spin text-muted-foreground" />}
+                  {proofUrl && <CheckCircle className="w-5 h-5 text-green-600" />}
+                </div>
+                {uploading && <p className="text-sm text-muted-foreground">Uploading file...</p>}
+                {proofUrl && <p className="text-sm text-green-600">File uploaded successfully</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Notes (Optional)</Label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Any additional information..."
+                  rows={3}
+                  className="text-base resize-none"
+                />
+              </div>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Amount Paid:</span>
-              <span className="font-medium">Ksh {invoice.total_paid.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-sm font-bold border-t pt-2">
-              <span>Balance Due:</span>
-              <span className="text-primary">Ksh {invoice.balance_due.toLocaleString()}</span>
-            </div>
           </div>
+        </ScrollArea>
 
-          <div className="space-y-2">
-            <Label>Amount to Pay *</Label>
-            <Input
-              type="number"
-              min="0"
-              max={invoice.balance_due}
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Payment Date *</Label>
-            <Input
-              type="date"
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Payment Method *</Label>
-            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                <SelectItem value="mpesa">M-Pesa</SelectItem>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="cheque">Cheque</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Transaction Reference *</Label>
-            <Input
-              value={transactionRef}
-              onChange={(e) => setTransactionRef(e.target.value)}
-              placeholder="Enter transaction ID or reference"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Proof of Payment</Label>
-            <Input
-              type="file"
-              accept="image/*,.pdf"
-              onChange={handleFileUpload}
-              disabled={uploading}
-            />
-            {uploading && <p className="text-sm text-muted-foreground">Uploading...</p>}
-            {proofUrl && <p className="text-sm text-success">File uploaded successfully</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Notes (Optional)</Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any additional information..."
-              rows={3}
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} className="flex-1">
-              Submit Payment
-            </Button>
-          </div>
+        {/* Actions - Fixed at bottom */}
+        <div className="flex justify-end gap-3 px-6 pb-6 pt-2 border-t bg-background">
+          <Button variant="outline" onClick={onClose} className="min-w-[100px]">
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} className="min-w-[100px]">
+            Submit Payment
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
