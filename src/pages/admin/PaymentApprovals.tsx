@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { usePayments } from "@/hooks/usePayments";
 import { FileText, CheckCircle, XCircle } from "lucide-react";
 
 export default function PaymentApprovals() {
+  const queryClient = useQueryClient();
   const { payments, approvePayment, rejectPayment } = usePayments();
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [rejectNotes, setRejectNotes] = useState("");
@@ -37,6 +38,31 @@ export default function PaymentApprovals() {
       return data;
     },
   });
+
+  // Real-time subscription for payments
+  useEffect(() => {
+    const channel = supabase
+      .channel('payments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments'
+        },
+        () => {
+          // Refresh payment data when any change occurs
+          queryClient.invalidateQueries({ queryKey: ["payments-with-details"] });
+          queryClient.invalidateQueries({ queryKey: ["payments"] });
+          queryClient.invalidateQueries({ queryKey: ["invoices"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const pendingPayments = paymentsWithDetails.filter((p) => p.status === "pending");
   const approvedPayments = paymentsWithDetails.filter((p) => p.status === "approved");
