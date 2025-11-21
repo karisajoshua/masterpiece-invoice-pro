@@ -14,11 +14,14 @@ export interface Invoice {
   billing_address: string | null;
   reference: string | null;
   status: "paid" | "unpaid" | "overdue";
+  payment_status: "not_started" | "partial" | "paid_pending_approval" | "fully_paid" | null;
   currency_label: string;
   notes: string | null;
   subtotal: number;
   vat_total: number;
   grand_total: number;
+  total_paid: number | null;
+  balance_due: number | null;
   pdf_url: string | null;
   created_at: string;
   updated_at: string;

@@ -1,4 +1,4 @@
-import { LayoutDashboard, FilePlus, FolderOpen, BarChart3, Settings, LogOut, FileCheck, DollarSign } from "lucide-react";
+import { LayoutDashboard, FilePlus, FolderOpen, BarChart3, Settings, LogOut, FileCheck, DollarSign, Users } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -17,6 +17,7 @@ import {
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Clients", url: "/", icon: Users },
   { title: "Create Invoice", url: "/create", icon: FilePlus },
   { title: "Invoice History", url: "/history", icon: FolderOpen },
   { title: "Client Documents", url: "/admin/documents", icon: FileCheck },

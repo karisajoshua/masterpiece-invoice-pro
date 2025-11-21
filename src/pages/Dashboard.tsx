@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { useAdminDocuments } from "@/hooks/useAdminDocuments";
+import { useClients } from "@/hooks/useClients";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +35,7 @@ export default function Dashboard() {
   const { invoices, isLoading } = useInvoices();
   const { settings } = useCompanySettings();
   const { documents } = useAdminDocuments();
+  const { clients } = useClients();
   const navigate = useNavigate();
 
   const totalInvoices = invoices.length;
@@ -182,6 +184,59 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Registered Clients */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Registered Clients</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {clients.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No clients registered yet
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Company Name</TableHead>
+                  <TableHead>Contact Person</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Invoices</TableHead>
+                  <TableHead>Outstanding</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {clients.map((client) => {
+                  const clientInvoices = invoices.filter(inv => inv.client_id === client.id);
+                  const clientOutstanding = clientInvoices.reduce((sum, inv) => {
+                    const balance = inv.balance_due ?? (inv.grand_total - (inv.total_paid ?? 0));
+                    return sum + (inv.status !== "paid" ? balance : 0);
+                  }, 0);
+                  
+                  return (
+                    <TableRow 
+                      key={client.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/admin/client/${client.id}`)}
+                    >
+                      <TableCell className="font-medium">{client.company_name}</TableCell>
+                      <TableCell>{client.contact_person || "-"}</TableCell>
+                      <TableCell>{client.email}</TableCell>
+                      <TableCell>{client.phone_primary}</TableCell>
+                      <TableCell>{clientInvoices.length}</TableCell>
+                      <TableCell className="font-medium">
+                        {settings?.currency_label || "Ksh"} {clientOutstanding.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
