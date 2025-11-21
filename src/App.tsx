@@ -22,6 +22,7 @@ import ClientDocuments from "./pages/client/ClientDocuments";
 import ClientProfile from "./pages/client/ClientProfile";
 import PaymentApprovals from "./pages/admin/PaymentApprovals";
 import DocumentManagement from "./pages/admin/DocumentManagement";
+import ClientDetail from "./pages/admin/ClientDetail";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -54,6 +55,7 @@ const App = () => (
                         <Route path="/settings" element={<Settings />} />
                         <Route path="/admin/payments" element={<PaymentApprovals />} />
                         <Route path="/admin/documents" element={<DocumentManagement />} />
+                        <Route path="/admin/client/:clientId" element={<ClientDetail />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Layout>

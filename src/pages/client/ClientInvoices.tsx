@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +32,7 @@ export default function ClientInvoices() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { settings } = useCompanySettings();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
@@ -63,6 +64,42 @@ export default function ClientInvoices() {
     },
     enabled: !!client,
   });
+
+  // Real-time subscription for invoice updates
+  useEffect(() => {
+    if (!client?.id) return;
+
+    const channel = supabase
+      .channel('client-invoice-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'invoices',
+          filter: `client_id=eq.${client.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["client-all-invoices", client.id] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["client-all-invoices", client.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [client?.id, queryClient]);
 
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch = invoice.invoice_no.toLowerCase().includes(searchTerm.toLowerCase());
