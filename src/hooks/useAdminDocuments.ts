@@ -105,10 +105,47 @@ export function useAdminDocuments() {
     },
   });
 
+  const deleteDocument = useMutation({
+    mutationFn: async ({ documentId, documentUrl }: { documentId: string; documentUrl: string }) => {
+      // Delete the file from storage first
+      const { error: storageError } = await supabase.storage
+        .from("client-documents")
+        .remove([documentUrl]);
+
+      if (storageError) {
+        console.error("Error deleting file from storage:", storageError);
+      }
+
+      // Delete the document record
+      const { error } = await supabase
+        .from("client_documents")
+        .delete()
+        .eq("id", documentId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-documents"] });
+      toast({
+        title: "Document Deleted",
+        description: "The document has been deleted successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error Deleting Document",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     documents,
     isLoading,
     updateDocumentStatus: updateDocumentStatus.mutate,
     isUpdating: updateDocumentStatus.isPending,
+    deleteDocument: deleteDocument.mutate,
+    isDeleting: deleteDocument.isPending,
   };
 }
