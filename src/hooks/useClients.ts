@@ -61,9 +61,37 @@ export function useClients() {
     },
   });
 
+  const deleteClient = useMutation({
+    mutationFn: async (clientId: string) => {
+      // Soft delete by setting is_active to false
+      const { data, error } = await supabase
+        .from("clients")
+        .update({ is_active: false })
+        .eq("id", clientId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      toast({ title: "Client deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error deleting client",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     clients,
     isLoading,
     createClient: createClient.mutate,
+    deleteClient: deleteClient.mutate,
+    isDeleting: deleteClient.isPending,
   };
 }

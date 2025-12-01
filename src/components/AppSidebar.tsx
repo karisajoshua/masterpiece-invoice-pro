@@ -17,7 +17,7 @@ import {
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Clients", url: "/", icon: Users },
+  { title: "Clients", url: "/admin/clients", icon: Users },
   { title: "Create Invoice", url: "/create", icon: FilePlus },
   { title: "Invoice History", url: "/history", icon: FolderOpen },
   { title: "Client Documents", url: "/admin/documents", icon: FileCheck },

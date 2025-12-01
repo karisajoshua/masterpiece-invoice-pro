@@ -20,7 +20,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { FileText, Download, CheckCircle, XCircle, Eye } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { FileText, Download, CheckCircle, XCircle, Eye, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -41,7 +52,7 @@ function getStatusBadge(status: string) {
 }
 
 export default function DocumentManagement() {
-  const { documents, isLoading, updateDocumentStatus, isUpdating } = useAdminDocuments();
+  const { documents, isLoading, updateDocumentStatus, isUpdating, deleteDocument, isDeleting } = useAdminDocuments();
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [adminNotes, setAdminNotes] = useState("");
 
@@ -206,6 +217,31 @@ export default function DocumentManagement() {
                               </div>
                             </DialogContent>
                           </Dialog>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Document</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{doc.document_name}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteDocument({ documentId: doc.id, documentUrl: doc.document_url })}
+                                  disabled={isDeleting}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>
