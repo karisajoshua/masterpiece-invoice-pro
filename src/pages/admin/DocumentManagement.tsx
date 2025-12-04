@@ -31,7 +31,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { FileText, Download, CheckCircle, XCircle, Eye, Trash2 } from "lucide-react";
+import { FileText, Download, CheckCircle, XCircle, Eye, Trash2, Sparkles } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -127,6 +133,7 @@ export default function DocumentManagement() {
                     <TableHead>Document Name</TableHead>
                     <TableHead>Client</TableHead>
                     <TableHead>Type</TableHead>
+                    <TableHead>AI Analysis</TableHead>
                     <TableHead>Submitted</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
@@ -138,7 +145,35 @@ export default function DocumentManagement() {
                       <TableCell className="font-medium">{doc.document_name}</TableCell>
                       <TableCell>{doc.clients.company_name}</TableCell>
                       <TableCell className="capitalize">{doc.document_type.replace("_", " ")}</TableCell>
+                      <TableCell>
+                        {doc.ai_suggested_type ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1">
+                                  <Sparkles className="h-3 w-3 text-primary" />
+                                  <span className="capitalize text-sm">
+                                    {doc.ai_suggested_type.replace("_", " ")}
+                                  </span>
+                                  <Badge variant={doc.ai_confidence && doc.ai_confidence >= 80 ? "default" : "secondary"} className="text-xs ml-1">
+                                    {doc.ai_confidence}%
+                                  </Badge>
+                                  {doc.ai_suggested_type !== doc.document_type && (
+                                    <Badge variant="outline" className="text-xs ml-1">differs</Badge>
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">{doc.ai_reasoning}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>{format(new Date(doc.created_at), "MMM d, yyyy")}</TableCell>
+                      <TableCell>{getStatusBadge(doc.status)}</TableCell>
                       <TableCell>{getStatusBadge(doc.status)}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -184,6 +219,26 @@ export default function DocumentManagement() {
                                   <div>
                                     <p className="text-sm font-medium mb-1">Client Notes</p>
                                     <p className="text-sm text-muted-foreground">{doc.notes}</p>
+                                  </div>
+                                )}
+                                {doc.ai_suggested_type && (
+                                  <div className="rounded-lg border bg-muted/50 p-3 space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <Sparkles className="h-4 w-4 text-primary" />
+                                      <p className="text-sm font-medium">AI Analysis</p>
+                                      <Badge variant={doc.ai_confidence && doc.ai_confidence >= 80 ? "default" : "secondary"} className="text-xs">
+                                        {doc.ai_confidence}% confident
+                                      </Badge>
+                                    </div>
+                                    <p className="text-sm">
+                                      Suggested: <span className="capitalize font-medium">{doc.ai_suggested_type.replace("_", " ")}</span>
+                                      {doc.ai_suggested_type !== doc.document_type && (
+                                        <span className="text-muted-foreground"> (client chose: {doc.document_type.replace("_", " ")})</span>
+                                      )}
+                                    </p>
+                                    {doc.ai_reasoning && (
+                                      <p className="text-xs text-muted-foreground">{doc.ai_reasoning}</p>
+                                    )}
                                   </div>
                                 )}
                                 <div>
