@@ -37,6 +37,20 @@ export function useClients() {
     },
   });
 
+  const { data: inactiveClients = [], isLoading: isLoadingInactive } = useQuery({
+    queryKey: ["clients-inactive"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*")
+        .eq("is_active", false)
+        .order("company_name");
+
+      if (error) throw error;
+      return data as Client[];
+    },
+  });
+
   const createClient = useMutation({
     mutationFn: async (client: Omit<Client, "id" | "created_at" | "updated_at">) => {
       const { data, error } = await supabase
@@ -76,6 +90,7 @@ export function useClients() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["clients-inactive"] });
       toast({ title: "Client deleted successfully" });
     },
     onError: (error: any) => {
@@ -87,11 +102,41 @@ export function useClients() {
     },
   });
 
+  const reactivateClient = useMutation({
+    mutationFn: async (clientId: string) => {
+      const { data, error } = await supabase
+        .from("clients")
+        .update({ is_active: true })
+        .eq("id", clientId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["clients-inactive"] });
+      toast({ title: "Client reactivated successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error reactivating client",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     clients,
+    inactiveClients,
     isLoading,
+    isLoadingInactive,
     createClient: createClient.mutate,
     deleteClient: deleteClient.mutate,
+    reactivateClient: reactivateClient.mutate,
     isDeleting: deleteClient.isPending,
+    isReactivating: reactivateClient.isPending,
   };
 }
