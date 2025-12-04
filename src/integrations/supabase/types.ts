@@ -17,6 +17,10 @@ export type Database = {
       client_documents: {
         Row: {
           admin_notes: string | null
+          ai_analyzed_at: string | null
+          ai_confidence: number | null
+          ai_reasoning: string | null
+          ai_suggested_type: string | null
           client_id: string
           created_at: string
           document_name: string
@@ -33,6 +37,10 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          ai_analyzed_at?: string | null
+          ai_confidence?: number | null
+          ai_reasoning?: string | null
+          ai_suggested_type?: string | null
           client_id: string
           created_at?: string
           document_name: string
@@ -49,6 +57,10 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          ai_analyzed_at?: string | null
+          ai_confidence?: number | null
+          ai_reasoning?: string | null
+          ai_suggested_type?: string | null
           client_id?: string
           created_at?: string
           document_name?: string

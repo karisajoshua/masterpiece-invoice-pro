@@ -18,6 +18,10 @@ export interface ClientDocument {
   admin_notes: string | null;
   created_at: string;
   updated_at: string;
+  ai_suggested_type: string | null;
+  ai_confidence: number | null;
+  ai_analyzed_at: string | null;
+  ai_reasoning: string | null;
 }
 
 export function useClientDocuments(clientId?: string) {
@@ -77,11 +81,17 @@ export function useClientDocuments(clientId?: string) {
       documentType,
       notes,
       clientId: cId,
+      aiSuggestedType,
+      aiConfidence,
+      aiReasoning,
     }: {
       file: File;
       documentType: string;
       notes?: string;
       clientId: string;
+      aiSuggestedType?: string;
+      aiConfidence?: number;
+      aiReasoning?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
@@ -107,6 +117,10 @@ export function useClientDocuments(clientId?: string) {
           document_url: fileName,
           file_size: file.size,
           notes,
+          ai_suggested_type: aiSuggestedType,
+          ai_confidence: aiConfidence,
+          ai_reasoning: aiReasoning,
+          ai_analyzed_at: aiSuggestedType ? new Date().toISOString() : null,
         })
         .select()
         .single();
