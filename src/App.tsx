@@ -7,8 +7,10 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { ClientRoute } from "./components/ClientRoute";
+import { AgentRoute } from "./components/AgentRoute";
 import { Layout } from "./components/Layout";
 import { ClientLayout } from "./components/ClientLayout";
+import { AgentLayout } from "./components/AgentLayout";
 import Dashboard from "./pages/Dashboard";
 import CreateInvoice from "./pages/CreateInvoice";
 import EditInvoice from "./pages/EditInvoice";
@@ -24,6 +26,11 @@ import PaymentApprovals from "./pages/admin/PaymentApprovals";
 import DocumentManagement from "./pages/admin/DocumentManagement";
 import ClientDetail from "./pages/admin/ClientDetail";
 import Clients from "./pages/admin/Clients";
+import Agents from "./pages/admin/Agents";
+import AgentDashboard from "./pages/agent/AgentDashboard";
+import AgentClients from "./pages/agent/AgentClients";
+import AgentMessages from "./pages/agent/AgentMessages";
+import AgentProfile from "./pages/agent/AgentProfile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -58,6 +65,7 @@ const App = () => (
                         <Route path="/admin/documents" element={<DocumentManagement />} />
                         <Route path="/admin/clients" element={<Clients />} />
                         <Route path="/admin/client/:clientId" element={<ClientDetail />} />
+                        <Route path="/admin/agents" element={<Agents />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Layout>
@@ -66,7 +74,25 @@ const App = () => (
               }
             />
             
-            {/* Client Routes */}
+            {/* Agent Routes */}
+            <Route
+              path="/agent/*"
+              element={
+                <ProtectedRoute>
+                  <AgentRoute>
+                    <AgentLayout>
+                      <Routes>
+                        <Route path="/dashboard" element={<AgentDashboard />} />
+                        <Route path="/clients" element={<AgentClients />} />
+                        <Route path="/messages" element={<AgentMessages />} />
+                        <Route path="/profile" element={<AgentProfile />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </AgentLayout>
+                  </AgentRoute>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/client/*"
               element={
