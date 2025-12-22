@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_messages: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_messages_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "field_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_documents: {
         Row: {
           admin_notes: string | null
@@ -87,6 +125,8 @@ export type Database = {
       }
       clients: {
         Row: {
+          agent_id: string | null
+          approval_status: Database["public"]["Enums"]["approval_status"] | null
           billing_address: string
           company_name: string
           company_pin: string
@@ -103,6 +143,10 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          agent_id?: string | null
+          approval_status?:
+            | Database["public"]["Enums"]["approval_status"]
+            | null
           billing_address: string
           company_name: string
           company_pin: string
@@ -119,6 +163,10 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          agent_id?: string | null
+          approval_status?:
+            | Database["public"]["Enums"]["approval_status"]
+            | null
           billing_address?: string
           company_name?: string
           company_pin?: string
@@ -134,7 +182,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "field_agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_settings: {
         Row: {
@@ -190,6 +246,45 @@ export type Database = {
           phone_2?: string | null
           phone_3?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      field_agents: {
+        Row: {
+          agent_code: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean | null
+          phone: string
+          region: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_code: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean | null
+          phone: string
+          region?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_code?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean | null
+          phone?: string
+          region?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -482,6 +577,7 @@ export type Database = {
     }
     Functions: {
       generate_invoice_number: { Args: never; Returns: string }
+      get_agent_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -492,7 +588,8 @@ export type Database = {
       update_overdue_invoices: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "admin" | "user" | "client"
+      app_role: "admin" | "user" | "client" | "agent"
+      approval_status: "pending" | "approved" | "rejected"
       document_status: "pending" | "reviewed" | "approved" | "rejected"
       invoice_status: "paid" | "unpaid" | "overdue"
       payment_status:
@@ -627,7 +724,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "client"],
+      app_role: ["admin", "user", "client", "agent"],
+      approval_status: ["pending", "approved", "rejected"],
       document_status: ["pending", "reviewed", "approved", "rejected"],
       invoice_status: ["paid", "unpaid", "overdue"],
       payment_status: [

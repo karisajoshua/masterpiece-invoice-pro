@@ -1,6 +1,8 @@
-import { LayoutDashboard, FilePlus, FolderOpen, BarChart3, Settings, LogOut, FileCheck, DollarSign, Users } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, User, LogOut } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrentAgent } from "@/hooks/useAgents";
+import { useAgentMessages } from "@/hooks/useAgentMessages";
 import {
   Sidebar,
   SidebarContent,
@@ -14,34 +16,34 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Clients", url: "/admin/clients", icon: Users },
-  { title: "Field Agents", url: "/admin/agents", icon: Users },
-  { title: "Create Invoice", url: "/create", icon: FilePlus },
-  { title: "Invoice History", url: "/history", icon: FolderOpen },
-  { title: "Client Documents", url: "/admin/documents", icon: FileCheck },
-  { title: "Payment Approvals", url: "/admin/payments", icon: DollarSign },
-  { title: "Reports", url: "/reports", icon: BarChart3 },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Dashboard", url: "/agent/dashboard", icon: LayoutDashboard },
+  { title: "My Clients", url: "/agent/clients", icon: Users },
+  { title: "Messages", url: "/agent/messages", icon: MessageSquare },
+  { title: "Profile", url: "/agent/profile", icon: User },
 ];
 
-export function AppSidebar() {
+export function AgentSidebar() {
   const { signOut } = useAuth();
+  const { agent } = useCurrentAgent();
+  const { unreadCount } = useAgentMessages();
   const { open } = useSidebar();
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border p-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
-            <span className="text-lg font-bold text-white">MP</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-accent">
+            <span className="text-lg font-bold text-sidebar-accent-foreground">FA</span>
           </div>
           {open && (
             <div>
-              <h2 className="text-sm font-semibold text-white">Master Piece</h2>
-              <p className="text-xs text-white/70">Invoicing Console</p>
+              <h2 className="text-sm font-semibold text-sidebar-foreground">Field Agent</h2>
+              <p className="text-xs text-sidebar-foreground/70">
+                {agent?.agent_code || "Loading..."}
+              </p>
             </div>
           )}
         </div>
@@ -49,7 +51,7 @@ export function AppSidebar() {
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-white/70">
+          <SidebarGroupLabel className="text-sidebar-foreground/70">
             {open ? "Navigation" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -59,17 +61,25 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink
                       to={item.url}
-                      end={item.url === "/"}
                       className={({ isActive }) =>
                         `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all ${
                           isActive
-                            ? "bg-white/20 text-white font-medium"
-                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                         }`
                       }
                     >
                       <item.icon className="h-4 w-4" />
-                      {open && <span>{item.title}</span>}
+                      {open && (
+                        <span className="flex items-center gap-2">
+                          {item.title}
+                          {item.title === "Messages" && unreadCount > 0 && (
+                            <Badge variant="destructive" className="h-5 min-w-5 text-xs">
+                              {unreadCount}
+                            </Badge>
+                          )}
+                        </span>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -82,7 +92,11 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={signOut} tooltip="Sign Out" className="text-white/80 hover:bg-white/10 hover:text-white">
+            <SidebarMenuButton 
+              onClick={signOut} 
+              tooltip="Sign Out" 
+              className="text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            >
               <LogOut className="h-4 w-4" />
               {open && <span>Sign Out</span>}
             </SidebarMenuButton>
