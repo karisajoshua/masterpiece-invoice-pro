@@ -68,10 +68,10 @@ export async function generateInvoicePDF(
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(255, 255, 255);
   pdf.text("Description", 17, yPos);
-  pdf.text("Qty", 100, yPos);
-  pdf.text("Unit Price", 120, yPos);
-  pdf.text("VAT %", 150, yPos);
-  pdf.text("Total", 175, yPos);
+  pdf.text("Qty", 78, yPos, { align: "center" });
+  pdf.text("Unit Price", 115, yPos, { align: "right" });
+  pdf.text("VAT %", 135, yPos, { align: "center" });
+  pdf.text("Total", 190, yPos, { align: "right" });
   
   yPos += 8;
   pdf.setTextColor(0, 0, 0);
@@ -84,11 +84,11 @@ export async function generateInvoicePDF(
       pdf.rect(15, yPos - 5, 180, 7, "F");
     }
     const lineTotal = item.qty * item.unit_price * (1 + item.vat_percent / 100);
-    pdf.text(item.description, 17, yPos, { maxWidth: 80 });
-    pdf.text(item.qty.toString(), 100, yPos);
-    pdf.text(`${settings.currency_label} ${item.unit_price.toLocaleString()}`, 120, yPos);
-    pdf.text(`${item.vat_percent}%`, 150, yPos);
-    pdf.text(`${settings.currency_label} ${lineTotal.toLocaleString()}`, 175, yPos);
+    pdf.text(item.description, 17, yPos, { maxWidth: 55 });
+    pdf.text(item.qty.toString(), 78, yPos, { align: "center" });
+    pdf.text(`${settings.currency_label} ${item.unit_price.toLocaleString()}`, 115, yPos, { align: "right" });
+    pdf.text(`${item.vat_percent}%`, 135, yPos, { align: "center" });
+    pdf.text(`${settings.currency_label} ${lineTotal.toLocaleString()}`, 190, yPos, { align: "right" });
     yPos += 7;
   });
 
