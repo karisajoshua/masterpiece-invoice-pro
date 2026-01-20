@@ -55,10 +55,23 @@ export async function generateInvoicePDF(
   pdf.setFont("helvetica", "bold");
   pdf.text("BILL TO:", 15, 77);
   pdf.setFont("helvetica", "normal");
-  pdf.text(invoice.client_name, 15, 82);
-  if (invoice.billing_address) pdf.text(invoice.billing_address, 15, 87);
-  if (invoice.client_email) pdf.text(invoice.client_email, 15, 92);
-  if (invoice.client_phone) pdf.text(invoice.client_phone, 15, 97);
+  let clientY = 82;
+  pdf.text(invoice.client_name, 15, clientY);
+  clientY += 5;
+  
+  if (invoice.billing_address) {
+    const addressLines = pdf.splitTextToSize(invoice.billing_address, 80);
+    pdf.text(addressLines, 15, clientY);
+    clientY += addressLines.length * 5;
+  }
+  if (invoice.client_email) {
+    pdf.text(invoice.client_email, 15, clientY);
+    clientY += 5;
+  }
+  if (invoice.client_phone) {
+    pdf.text(invoice.client_phone, 15, clientY);
+    clientY += 5;
+  }
 
   // Line items table with blue header
   let yPos = 110;
