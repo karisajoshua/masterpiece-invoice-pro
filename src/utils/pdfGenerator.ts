@@ -10,6 +10,9 @@ export async function generateInvoicePDF(
 ) {
   const pdf = new jsPDF();
   
+  // Set default font to Times (more professional for business documents)
+  pdf.setFont("times", "normal");
+  
   // Blue and red header bands
   pdf.setFillColor(39, 42, 108); // Blue #272a6c
   pdf.rect(0, 0, 210, 15, "F");
@@ -28,36 +31,75 @@ export async function generateInvoicePDF(
     console.error("Failed to load logo:", error);
   }
 
-  // Company details
+  // Company details - Times for elegant business look
+  pdf.setFont("times", "normal");
   pdf.setFontSize(10);
-  pdf.setTextColor(0, 0, 0);
+  pdf.setTextColor(60, 60, 60);
   pdf.text(settings.company_name, 15, 52);
   pdf.text(`PIN: ${settings.company_pin}`, 15, 57);
   if (settings.address) pdf.text(settings.address, 15, 62);
   pdf.text(`${settings.phone_1} | ${settings.email}`, 15, 67);
 
-  // Invoice title
-  pdf.setFontSize(20);
+  // Invoice title - Bold and prominent
   pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(24);
   pdf.setTextColor(39, 42, 108);
-  pdf.text("INVOICE", 150, 30);
+  pdf.text("INVOICE", 195, 32, { align: "right" });
 
-  // Invoice details
-  pdf.setFontSize(10);
+  // Invoice details - Clean sans-serif
   pdf.setFont("helvetica", "normal");
-  pdf.setTextColor(0, 0, 0);
-  pdf.text(`Invoice No: ${invoice.invoice_no}`, 150, 40);
-  pdf.text(`Date: ${new Date(invoice.date_issued).toLocaleDateString()}`, 150, 45);
-  if (invoice.reference) pdf.text(`Reference: ${invoice.reference}`, 150, 50);
-  pdf.text(`Status: ${invoice.status.toUpperCase()}`, 150, 55);
-
-  // Client details
+  pdf.setFontSize(9);
+  pdf.setTextColor(80, 80, 80);
+  
+  let detailY = 40;
   pdf.setFont("helvetica", "bold");
-  pdf.text("BILL TO:", 15, 77);
+  pdf.text("Invoice No:", 145, detailY);
   pdf.setFont("helvetica", "normal");
-  let clientY = 82;
+  pdf.text(invoice.invoice_no, 195, detailY, { align: "right" });
+  
+  detailY += 5;
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Date:", 145, detailY);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(new Date(invoice.date_issued).toLocaleDateString(), 195, detailY, { align: "right" });
+  
+  if (invoice.reference) {
+    detailY += 5;
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Reference:", 145, detailY);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(invoice.reference, 195, detailY, { align: "right" });
+  }
+  
+  detailY += 5;
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Status:", 145, detailY);
+  pdf.setFont("helvetica", "normal");
+  const statusColor = invoice.status === "paid" ? [34, 139, 34] : invoice.status === "overdue" ? [220, 38, 38] : [39, 42, 108];
+  pdf.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+  pdf.text(invoice.status.toUpperCase(), 195, detailY, { align: "right" });
+
+  // Client details section
+  pdf.setTextColor(39, 42, 108);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(11);
+  pdf.text("BILL TO", 15, 77);
+  
+  // Underline for section header
+  pdf.setDrawColor(39, 42, 108);
+  pdf.setLineWidth(0.5);
+  pdf.line(15, 78.5, 45, 78.5);
+  
+  pdf.setFont("times", "bold");
+  pdf.setFontSize(11);
+  pdf.setTextColor(40, 40, 40);
+  let clientY = 84;
   pdf.text(invoice.client_name, 15, clientY);
   clientY += 5;
+  
+  pdf.setFont("times", "normal");
+  pdf.setFontSize(10);
+  pdf.setTextColor(70, 70, 70);
   
   if (invoice.billing_address) {
     const addressLines = pdf.splitTextToSize(invoice.billing_address, 80);
@@ -74,26 +116,28 @@ export async function generateInvoicePDF(
   }
 
   // Line items table with blue header
-  let yPos = 110;
+  let yPos = Math.max(110, clientY + 8);
   pdf.setFillColor(39, 42, 108);
   pdf.rect(15, yPos - 5, 180, 8, "F");
   
   pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
   pdf.setTextColor(255, 255, 255);
-  pdf.text("Description", 17, yPos);
-  pdf.text("Qty", 78, yPos, { align: "center" });
-  pdf.text("Unit Price", 115, yPos, { align: "right" });
+  pdf.text("DESCRIPTION", 17, yPos);
+  pdf.text("QTY", 78, yPos, { align: "center" });
+  pdf.text("UNIT PRICE", 115, yPos, { align: "right" });
   pdf.text("VAT %", 135, yPos, { align: "center" });
-  pdf.text("Total", 190, yPos, { align: "right" });
+  pdf.text("TOTAL", 190, yPos, { align: "right" });
   
   yPos += 8;
-  pdf.setTextColor(0, 0, 0);
+  pdf.setTextColor(50, 50, 50);
 
   // Items with alternating row colors
-  pdf.setFont("helvetica", "normal");
+  pdf.setFont("times", "normal");
+  pdf.setFontSize(10);
   items.forEach((item, index) => {
     if (index % 2 === 0) {
-      pdf.setFillColor(245, 245, 245);
+      pdf.setFillColor(248, 248, 252);
       pdf.rect(15, yPos - 5, 180, 7, "F");
     }
     const lineTotal = item.qty * item.unit_price * (1 + item.vat_percent / 100);
@@ -101,56 +145,69 @@ export async function generateInvoicePDF(
     pdf.text(item.qty.toString(), 78, yPos, { align: "center" });
     pdf.text(`${settings.currency_label} ${item.unit_price.toLocaleString()}`, 115, yPos, { align: "right" });
     pdf.text(`${item.vat_percent}%`, 135, yPos, { align: "center" });
+    pdf.setFont("times", "bold");
     pdf.text(`${settings.currency_label} ${lineTotal.toLocaleString()}`, 190, yPos, { align: "right" });
+    pdf.setFont("times", "normal");
     yPos += 7;
   });
 
   // Totals section with blue background
   yPos += 10;
   pdf.setFillColor(39, 42, 108);
-  pdf.rect(15, yPos - 5, 180, 28, "F");
+  pdf.rect(110, yPos - 5, 85, 28, "F");
   
-  pdf.setFont("helvetica", "bold");
+  pdf.setFont("helvetica", "normal");
   pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(11);
+  pdf.setFontSize(10);
   
   // Subtotal
-  pdf.text("Subtotal:", 25, yPos);
-  pdf.text(`${settings.currency_label} ${invoice.subtotal.toLocaleString()}`, 185, yPos, { align: "right" });
+  pdf.text("Subtotal:", 115, yPos);
+  pdf.text(`${settings.currency_label} ${invoice.subtotal.toLocaleString()}`, 190, yPos, { align: "right" });
   
   yPos += 7;
   // VAT Total
-  pdf.text("VAT Total:", 25, yPos);
-  pdf.text(`${settings.currency_label} ${invoice.vat_total.toLocaleString()}`, 185, yPos, { align: "right" });
+  pdf.text("VAT Total:", 115, yPos);
+  pdf.text(`${settings.currency_label} ${invoice.vat_total.toLocaleString()}`, 190, yPos, { align: "right" });
   
   yPos += 10;
   // Grand Total - larger and prominent
-  pdf.setFontSize(13);
-  pdf.text("GRAND TOTAL:", 25, yPos);
-  pdf.text(`${settings.currency_label} ${invoice.grand_total.toLocaleString()}`, 185, yPos, { align: "right" });
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(12);
+  pdf.text("GRAND TOTAL:", 115, yPos);
+  pdf.text(`${settings.currency_label} ${invoice.grand_total.toLocaleString()}`, 190, yPos, { align: "right" });
   
-  yPos += 10;
-  pdf.setTextColor(0, 0, 0);
+  yPos += 15;
+  pdf.setTextColor(50, 50, 50);
 
-  // Notes
+  // Notes section
   if (invoice.notes) {
-    yPos += 15;
-    pdf.setFontSize(10);
+    yPos += 10;
     pdf.setFont("helvetica", "bold");
-    pdf.text("Notes:", 15, yPos);
-    pdf.setFont("helvetica", "normal");
-    pdf.text(invoice.notes, 15, yPos + 5, { maxWidth: 180 });
+    pdf.setFontSize(10);
+    pdf.setTextColor(39, 42, 108);
+    pdf.text("Notes", 15, yPos);
+    pdf.setDrawColor(39, 42, 108);
+    pdf.line(15, yPos + 1.5, 35, yPos + 1.5);
+    
+    pdf.setFont("times", "italic");
+    pdf.setFontSize(9);
+    pdf.setTextColor(70, 70, 70);
+    pdf.text(invoice.notes, 15, yPos + 6, { maxWidth: 180 });
+    yPos += 15;
   }
 
   // Payment terms
-  yPos += 20;
-  pdf.setFontSize(9);
+  yPos += 10;
+  pdf.setFont("times", "normal");
+  pdf.setFontSize(8);
+  pdf.setTextColor(100, 100, 100);
   pdf.text(settings.payment_terms_text, 15, yPos, { maxWidth: 180 });
 
   // Footer
   const pageHeight = pdf.internal.pageSize.getHeight();
-  pdf.setFontSize(8);
-  pdf.setTextColor(128, 128, 128);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7);
+  pdf.setTextColor(150, 150, 150);
   pdf.text("Powered by Texcortech Systems", 105, pageHeight - 10, { align: "center" });
 
   return pdf;
