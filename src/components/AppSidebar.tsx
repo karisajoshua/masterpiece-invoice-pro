@@ -1,6 +1,7 @@
 import { LayoutDashboard, FilePlus, FolderOpen, BarChart3, Settings, LogOut, FileCheck, DollarSign, Users } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import masterpieceLogo from "@/assets/masterpiece-logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -33,10 +34,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border p-6">
+      <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
-            <span className="text-lg font-bold text-white">MP</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white p-1">
+            <img src={masterpieceLogo} alt="Master Piece" className="h-full w-full object-contain" />
           </div>
           {open && (
             <div>
