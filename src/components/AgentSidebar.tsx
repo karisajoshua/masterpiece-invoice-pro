@@ -3,6 +3,8 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentAgent } from "@/hooks/useAgents";
 import { useAgentMessages } from "@/hooks/useAgentMessages";
+import masterpieceLogo from "@/assets/masterpiece-logo.png";
+import { ModeToggle } from "@/components/ModeToggle";
 import {
   Sidebar,
   SidebarContent,
@@ -33,19 +35,22 @@ export function AgentSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-accent">
-            <span className="text-lg font-bold text-sidebar-accent-foreground">FA</span>
-          </div>
-          {open && (
-            <div>
-              <h2 className="text-sm font-semibold text-sidebar-foreground">Field Agent</h2>
-              <p className="text-xs text-sidebar-foreground/70">
-                {agent?.agent_code || "Loading..."}
-              </p>
+      <SidebarHeader className="border-b border-sidebar-border p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white p-1">
+              <img src={masterpieceLogo} alt="Master Piece" className="h-full w-full object-contain" />
             </div>
-          )}
+            {open && (
+              <div>
+                <h2 className="text-sm font-semibold text-sidebar-foreground">Field Agent</h2>
+                <p className="text-xs text-sidebar-foreground/70">
+                  {agent?.agent_code || "Loading..."}
+                </p>
+              </div>
+            )}
+          </div>
+          {open && <ModeToggle />}
         </div>
       </SidebarHeader>
       

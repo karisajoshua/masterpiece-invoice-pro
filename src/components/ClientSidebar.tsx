@@ -1,6 +1,8 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSidebar } from "@/components/ui/sidebar";
+import masterpieceLogo from "@/assets/masterpiece-logo.png";
+import { ModeToggle } from "@/components/ModeToggle";
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +16,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { LayoutDashboard, FileText, CreditCard, FolderOpen, User, LogOut } from "lucide-react";
-import logoImage from "@/assets/masterpiece-logo.png";
 
 const menuItems = [
   {
@@ -49,32 +50,42 @@ export function ClientSidebar() {
   const { open } = useSidebar();
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-4">
-          <img 
-            src={logoImage} 
-            alt="Logo" 
-            className={`transition-all ${open ? "h-8 w-8" : "h-6 w-6"}`}
-          />
-          {open && (
-            <span className="font-semibold text-sm">Client Portal</span>
-          )}
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+      <SidebarHeader className="border-b border-sidebar-border p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white p-1">
+              <img src={masterpieceLogo} alt="Master Piece" className="h-full w-full object-contain" />
+            </div>
+            {open && (
+              <div>
+                <h2 className="text-sm font-semibold text-sidebar-foreground">Master Piece</h2>
+                <p className="text-xs text-sidebar-foreground/70">Client Portal</p>
+              </div>
+            )}
+          </div>
+          {open && <ModeToggle />}
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/70">
+            {open ? "Menu" : ""}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink
                       to={item.url}
                       className={({ isActive }) =>
-                        isActive ? "bg-accent" : ""
+                        `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all ${
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                        }`
                       }
                     >
                       <item.icon className="h-4 w-4" />
@@ -88,10 +99,14 @@ export function ClientSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => signOut()}>
+            <SidebarMenuButton 
+              onClick={() => signOut()} 
+              tooltip="Sign Out"
+              className="text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            >
               <LogOut className="h-4 w-4" />
               {open && <span>Sign Out</span>}
             </SidebarMenuButton>

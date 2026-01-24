@@ -1,7 +1,8 @@
-import { LayoutDashboard, FilePlus, FolderOpen, BarChart3, Settings, LogOut, FileCheck, DollarSign, Users } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { LayoutDashboard, FilePlus, FolderOpen, BarChart3, Settings, LogOut, FileCheck, DollarSign, Users, PlusCircle } from "lucide-react";
+import { NavLink, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import masterpieceLogo from "@/assets/masterpiece-logo.png";
+import { ModeToggle } from "@/components/ModeToggle";
 import {
   Sidebar,
   SidebarContent,
@@ -20,7 +21,6 @@ const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Clients", url: "/admin/clients", icon: Users },
   { title: "Field Agents", url: "/admin/agents", icon: Users },
-  { title: "Create Invoice", url: "/create", icon: FilePlus },
   { title: "Invoice History", url: "/history", icon: FolderOpen },
   { title: "Client Documents", url: "/admin/documents", icon: FileCheck },
   { title: "Payment Approvals", url: "/admin/payments", icon: DollarSign },
@@ -35,22 +35,48 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white p-1">
-            <img src={masterpieceLogo} alt="Master Piece" className="h-full w-full object-contain" />
-          </div>
-          {open && (
-            <div>
-              <h2 className="text-sm font-semibold text-white">Master Piece</h2>
-              <p className="text-xs text-white/70">Invoicing Console</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white p-1">
+              <img src={masterpieceLogo} alt="Master Piece" className="h-full w-full object-contain" />
             </div>
-          )}
+            {open && (
+              <div>
+                <h2 className="text-sm font-semibold text-sidebar-foreground">Master Piece</h2>
+                <p className="text-xs text-sidebar-foreground/70">Invoicing Console</p>
+              </div>
+            )}
+          </div>
+          {open && <ModeToggle />}
         </div>
       </SidebarHeader>
       
       <SidebarContent>
+        {/* Quick Actions */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-white/70">
+          <SidebarGroupLabel className="text-sidebar-foreground/70">
+            {open ? "Quick Actions" : ""}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Create New Invoice">
+                  <Link 
+                    to="/create" 
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all bg-primary/10 text-primary hover:bg-primary/20 font-medium"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    {open && <span>Create Invoice</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Navigation */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/70">
             {open ? "Navigation" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -64,8 +90,8 @@ export function AppSidebar() {
                       className={({ isActive }) =>
                         `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all ${
                           isActive
-                            ? "bg-white/20 text-white font-medium"
-                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                         }`
                       }
                     >
@@ -83,7 +109,11 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={signOut} tooltip="Sign Out" className="text-white/80 hover:bg-white/10 hover:text-white">
+            <SidebarMenuButton 
+              onClick={signOut} 
+              tooltip="Sign Out" 
+              className="text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            >
               <LogOut className="h-4 w-4" />
               {open && <span>Sign Out</span>}
             </SidebarMenuButton>
