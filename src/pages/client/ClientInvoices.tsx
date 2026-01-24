@@ -21,9 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Download, Search } from "lucide-react";
+import { Download, Search, History } from "lucide-react";
 import { format } from "date-fns";
 import { PaymentSubmissionDialog } from "@/components/client/PaymentSubmissionDialog";
+import { PaymentHistoryDialog } from "@/components/PaymentHistoryDialog";
 import { generateInvoicePDF } from "@/utils/pdfGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
@@ -36,6 +37,7 @@ export default function ClientInvoices() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [paymentHistoryInvoice, setPaymentHistoryInvoice] = useState<{ id: string; no: string } | null>(null);
 
   const { data: client } = useQuery({
     queryKey: ["client-profile", user?.id],
@@ -117,6 +119,16 @@ export default function ClientInvoices() {
     }
   };
 
+  const getPaymentStatusLabel = (status: string) => {
+    switch (status) {
+      case "not_started": return "Not Started";
+      case "partial": return "Partially Paid";
+      case "paid_pending_approval": return "Pending Approval";
+      case "fully_paid": return "Fully Paid";
+      default: return status.replace(/_/g, " ");
+    }
+  };
+
   const handleDownloadInvoice = async (invoiceId: string) => {
     try {
       const { data: invoiceData, error: invoiceError } = await supabase
@@ -135,7 +147,8 @@ export default function ClientInvoices() {
 
       if (itemsError) throw itemsError;
 
-      await generateInvoicePDF(invoiceData, items, settings);
+      const pdfDoc = await generateInvoicePDF(invoiceData, items, settings);
+      pdfDoc.save(`${invoiceData.invoice_no}.pdf`);
       toast({ title: "Invoice downloaded successfully" });
     } catch (error: any) {
       toast({
@@ -175,7 +188,7 @@ export default function ClientInvoices() {
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="not_started">Not Started</SelectItem>
-                <SelectItem value="partial">Partial</SelectItem>
+                <SelectItem value="partial">Partially Paid</SelectItem>
                 <SelectItem value="paid_pending_approval">Pending Approval</SelectItem>
                 <SelectItem value="fully_paid">Fully Paid</SelectItem>
               </SelectContent>
@@ -209,13 +222,24 @@ export default function ClientInvoices() {
                     <TableCell className="font-medium">{invoice.invoice_no}</TableCell>
                     <TableCell>{format(new Date(invoice.date_issued), "MMM d, yyyy")}</TableCell>
                     <TableCell>Ksh {invoice.grand_total.toLocaleString()}</TableCell>
-                    <TableCell>Ksh {invoice.total_paid.toLocaleString()}</TableCell>
+                    <TableCell className={invoice.total_paid > 0 ? "text-green-600 font-medium" : ""}>
+                      Ksh {invoice.total_paid.toLocaleString()}
+                    </TableCell>
                     <TableCell className="font-medium">
                       Ksh {(invoice.balance_due || 0).toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getPaymentStatusColor(invoice.payment_status)}>
-                        {invoice.payment_status.replace(/_/g, " ")}
+                      <Badge 
+                        variant={getPaymentStatusColor(invoice.payment_status)}
+                        className={
+                          invoice.payment_status === "fully_paid" 
+                            ? "bg-green-500/10 text-green-600 hover:bg-green-500/20" 
+                            : invoice.payment_status === "partial"
+                            ? "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20"
+                            : ""
+                        }
+                      >
+                        {getPaymentStatusLabel(invoice.payment_status)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -224,8 +248,17 @@ export default function ClientInvoices() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleDownloadInvoice(invoice.id)}
+                          title="Download Invoice"
                         >
                           <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setPaymentHistoryInvoice({ id: invoice.id, no: invoice.invoice_no })}
+                          title="Payment History"
+                        >
+                          <History className="h-4 w-4" />
                         </Button>
                         {invoice.balance_due && invoice.balance_due > 0 && (
                           <Button
@@ -250,6 +283,15 @@ export default function ClientInvoices() {
           invoiceId={selectedInvoiceId}
           clientId={client?.id || ""}
           onClose={() => setSelectedInvoiceId(null)}
+        />
+      )}
+
+      {paymentHistoryInvoice && (
+        <PaymentHistoryDialog
+          invoiceId={paymentHistoryInvoice.id}
+          invoiceNo={paymentHistoryInvoice.no}
+          open={!!paymentHistoryInvoice}
+          onOpenChange={(open) => !open && setPaymentHistoryInvoice(null)}
         />
       )}
     </div>

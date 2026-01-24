@@ -71,13 +71,33 @@ export async function generateInvoicePDF(
     pdf.text(invoice.reference, 195, detailY, { align: "right" });
   }
   
+  // Payment Status with enhanced coloring
   detailY += 5;
   pdf.setFont("helvetica", "bold");
   pdf.text("Status:", 145, detailY);
   pdf.setFont("helvetica", "normal");
-  const statusColor = invoice.status === "paid" ? [34, 139, 34] : invoice.status === "overdue" ? [220, 38, 38] : [39, 42, 108];
+  
+  let paymentStatusText = "";
+  let statusColor = [39, 42, 108]; // Default blue
+  
+  if (invoice.payment_status === "fully_paid" || invoice.status === "paid") {
+    statusColor = [34, 139, 34]; // Green
+    paymentStatusText = "FULLY PAID";
+  } else if (invoice.payment_status === "partial") {
+    statusColor = [255, 140, 0]; // Orange
+    paymentStatusText = "PARTIALLY PAID";
+  } else if (invoice.payment_status === "paid_pending_approval") {
+    statusColor = [255, 180, 0]; // Amber
+    paymentStatusText = "PENDING APPROVAL";
+  } else if (invoice.status === "overdue") {
+    statusColor = [220, 38, 38]; // Red
+    paymentStatusText = "OVERDUE";
+  } else {
+    paymentStatusText = "UNPAID";
+  }
+  
   pdf.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
-  pdf.text(invoice.status.toUpperCase(), 195, detailY, { align: "right" });
+  pdf.text(paymentStatusText, 195, detailY, { align: "right" });
 
   // Client details section
   pdf.setTextColor(39, 42, 108);
@@ -153,8 +173,13 @@ export async function generateInvoicePDF(
 
   // Totals section with blue background
   yPos += 10;
+  
+  // Calculate height needed for totals section (includes payment info if partial payments exist)
+  const hasPayments = invoice.total_paid > 0;
+  const totalsHeight = hasPayments ? 45 : 28;
+  
   pdf.setFillColor(39, 42, 108);
-  pdf.rect(110, yPos - 5, 85, 28, "F");
+  pdf.rect(110, yPos - 5, 85, totalsHeight, "F");
   
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(255, 255, 255);
@@ -169,12 +194,31 @@ export async function generateInvoicePDF(
   pdf.text("VAT Total:", 115, yPos);
   pdf.text(`${settings.currency_label} ${invoice.vat_total.toLocaleString()}`, 190, yPos, { align: "right" });
   
-  yPos += 10;
+  yPos += 7;
   // Grand Total - larger and prominent
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(12);
-  pdf.text("GRAND TOTAL:", 115, yPos);
+  pdf.text("Grand Total:", 115, yPos);
   pdf.text(`${settings.currency_label} ${invoice.grand_total.toLocaleString()}`, 190, yPos, { align: "right" });
+  
+  // Payment Summary (if partial payments exist)
+  if (hasPayments) {
+    yPos += 10;
+    pdf.setDrawColor(255, 255, 255);
+    pdf.setLineWidth(0.3);
+    pdf.line(115, yPos - 3, 190, yPos - 3);
+    
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    pdf.text("Amount Paid:", 115, yPos);
+    pdf.text(`${settings.currency_label} ${invoice.total_paid.toLocaleString()}`, 190, yPos, { align: "right" });
+    
+    yPos += 6;
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    const balanceDue = invoice.balance_due ?? (invoice.grand_total - invoice.total_paid);
+    pdf.text("BALANCE DUE:", 115, yPos);
+    pdf.text(`${settings.currency_label} ${balanceDue.toLocaleString()}`, 190, yPos, { align: "right" });
+  }
   
   yPos += 15;
   pdf.setTextColor(50, 50, 50);
