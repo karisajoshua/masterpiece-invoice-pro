@@ -240,6 +240,26 @@ export async function generateInvoicePDF(
     yPos += 15;
   }
 
+  // Payment Details section
+  if (settings.payment_details) {
+    yPos += 10;
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
+    pdf.setTextColor(39, 42, 108);
+    pdf.text("PAYMENT DETAILS", 15, yPos);
+    pdf.setDrawColor(39, 42, 108);
+    pdf.line(15, yPos + 1.5, 60, yPos + 1.5);
+    
+    pdf.setFont("times", "normal");
+    pdf.setFontSize(9);
+    pdf.setTextColor(50, 50, 50);
+    const paymentLines = settings.payment_details.split("\n");
+    paymentLines.forEach((line) => {
+      yPos += 5;
+      pdf.text(line, 15, yPos);
+    });
+  }
+
   // Payment terms
   yPos += 10;
   pdf.setFont("times", "normal");

@@ -1,4 +1,4 @@
-import { LayoutDashboard, FilePlus, FolderOpen, BarChart3, Settings, LogOut, FileCheck, DollarSign, Users, PlusCircle } from "lucide-react";
+import { LayoutDashboard, FilePlus, FolderOpen, BarChart3, Settings, LogOut, FileCheck, DollarSign, Users, PlusCircle, Package } from "lucide-react";
 import { NavLink, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import masterpieceLogo from "@/assets/masterpiece-logo.png";
@@ -21,6 +21,7 @@ const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Clients", url: "/admin/clients", icon: Users },
   { title: "Field Agents", url: "/admin/agents", icon: Users },
+  { title: "Products", url: "/admin/products", icon: Package },
   { title: "Invoice History", url: "/history", icon: FolderOpen },
   { title: "Client Documents", url: "/admin/documents", icon: FileCheck },
   { title: "Payment Approvals", url: "/admin/payments", icon: DollarSign },

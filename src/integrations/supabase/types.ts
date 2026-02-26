@@ -204,6 +204,7 @@ export type Database = {
           id: string
           invoice_prefix: string
           logo_url: string | null
+          payment_details: string | null
           payment_terms_days: number
           payment_terms_text: string | null
           phone_1: string | null
@@ -222,6 +223,7 @@ export type Database = {
           id?: string
           invoice_prefix?: string
           logo_url?: string | null
+          payment_details?: string | null
           payment_terms_days?: number
           payment_terms_text?: string | null
           phone_1?: string | null
@@ -240,6 +242,7 @@ export type Database = {
           id?: string
           invoice_prefix?: string
           logo_url?: string | null
+          payment_details?: string | null
           payment_terms_days?: number
           payment_terms_text?: string | null
           phone_1?: string | null
