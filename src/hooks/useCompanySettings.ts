@@ -17,6 +17,7 @@ export interface CompanySettings {
   default_vat_percent: number;
   payment_terms_days: number;
   payment_terms_text: string;
+  payment_details: string | null;
 }
 
 export function useCompanySettings() {

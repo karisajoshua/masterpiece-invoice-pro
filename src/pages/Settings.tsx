@@ -22,6 +22,7 @@ export default function Settings() {
   const [currencyLabel, setCurrencyLabel] = useState("");
   const [defaultVat, setDefaultVat] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
+  const [paymentDetails, setPaymentDetails] = useState("");
 
   useEffect(() => {
     if (settings) {
@@ -36,6 +37,7 @@ export default function Settings() {
       setCurrencyLabel(settings.currency_label);
       setDefaultVat(settings.default_vat_percent.toString());
       setPaymentTerms(settings.payment_terms_text);
+      setPaymentDetails(settings.payment_details || "");
     }
   }, [settings]);
 
@@ -52,6 +54,7 @@ export default function Settings() {
       currency_label: currencyLabel,
       default_vat_percent: parseFloat(defaultVat),
       payment_terms_text: paymentTerms,
+      payment_details: paymentDetails,
     });
   };
 
@@ -68,6 +71,7 @@ export default function Settings() {
       setCurrencyLabel(settings.currency_label);
       setDefaultVat(settings.default_vat_percent.toString());
       setPaymentTerms(settings.payment_terms_text);
+      setPaymentDetails(settings.payment_details || "");
     }
   };
 
@@ -229,6 +233,27 @@ export default function Settings() {
                 placeholder="Enter default payment terms"
                 rows={2}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg">Payment Details</CardTitle>
+            <CardDescription>Bank details displayed on invoices for client payments</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label>Payment Details</Label>
+              <Textarea
+                value={paymentDetails}
+                onChange={(e) => setPaymentDetails(e.target.value)}
+                placeholder="Bank: KCB KICC Branch&#10;A/C: 1329591283&#10;Paybill: 522533&#10;A/C No: 9097900"
+                rows={5}
+              />
+              <p className="text-xs text-muted-foreground">
+                These details will appear on every generated invoice PDF.
+              </p>
             </div>
           </CardContent>
         </Card>

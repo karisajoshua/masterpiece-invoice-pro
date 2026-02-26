@@ -466,6 +466,13 @@ export default function CreateInvoice() {
                 <span className="text-primary">{settings?.currency_label || "Ksh"} {grandTotal.toLocaleString()}</span>
               </div>
             </div>
+
+            {settings?.payment_details && (
+              <div className="border-t pt-3 mt-3">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">PAYMENT DETAILS</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-line">{settings.payment_details}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

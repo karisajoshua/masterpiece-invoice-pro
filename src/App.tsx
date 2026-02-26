@@ -27,6 +27,7 @@ import DocumentManagement from "./pages/admin/DocumentManagement";
 import ClientDetail from "./pages/admin/ClientDetail";
 import Clients from "./pages/admin/Clients";
 import Agents from "./pages/admin/Agents";
+import Products from "./pages/admin/Products";
 import AgentDashboard from "./pages/agent/AgentDashboard";
 import AgentClients from "./pages/agent/AgentClients";
 import AgentMessages from "./pages/agent/AgentMessages";
@@ -66,6 +67,7 @@ const App = () => (
                         <Route path="/admin/clients" element={<Clients />} />
                         <Route path="/admin/client/:clientId" element={<ClientDetail />} />
                         <Route path="/admin/agents" element={<Agents />} />
+                        <Route path="/admin/products" element={<Products />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Layout>
