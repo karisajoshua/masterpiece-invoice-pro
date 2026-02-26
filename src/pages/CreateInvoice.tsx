@@ -42,8 +42,10 @@ export default function CreateInvoice() {
     { id: "1", description: "", qty: "", unitPrice: "", vatPercent: "16" },
   ]);
 
+  const settingsApplied = useState(false);
   useEffect(() => {
-    if (settings) {
+    if (settings && !settingsApplied[0]) {
+      settingsApplied[1](true);
       setLineItems([
         { id: "1", description: "", qty: "", unitPrice: "", vatPercent: settings.default_vat_percent.toString() },
       ]);
@@ -69,7 +71,9 @@ export default function CreateInvoice() {
       unitPrice: product.default_unit_price.toString(),
       vatPercent: product.default_vat_percent?.toString() || settings?.default_vat_percent.toString() || "16",
     }));
-    setLineItems([...lineItems, ...newItems]);
+    // Replace empty items, keep filled ones
+    const filledItems = lineItems.filter(item => item.description.trim());
+    setLineItems(filledItems.length > 0 ? [...filledItems, ...newItems] : newItems);
   };
 
   const addLineItem = () => {
